@@ -17,11 +17,4 @@ export class AuthController {
     async signup() {
         return ""
     }
-
-    // profile route
-    @UseGuards(AuthGuard('jwt'))
-    @Get('profile')
-    async profileHandler(@Request() req){
-        return req.user
-    }
 }
