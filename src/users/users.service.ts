@@ -3,7 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from './users.schema';
 import { Model } from 'mongoose';
 import { LoginDTO, RegisterDTO } from 'src/auth/auth.interface';
-import { ChatMessage, LoginSucc, SingleChat } from './users.interface';
+import { LoginSucc, SingleChat } from './users.interface';
+import { ChatMessage } from 'src/messages/messages.interface';
 
 @Injectable()
 export class UsersService {
@@ -69,7 +70,7 @@ export class UsersService {
     getUserChats(usrId: string): Promise<SingleChat[]>{
         return new Promise(async (resolve, reject) => {
             try {
-                const {chats} = await this.userModel.findOne({_id: usrId}, {"chats.chatMessages": 0, _id: 0}) as {chats: SingleChat[]}
+                const chats = await (await this.userModel.findOne({_id: usrId}, { _id: 0})).chats;
                 // chceck for null
                 if(chats){
                     resolve(chats)
@@ -81,6 +82,22 @@ export class UsersService {
             }
         })
     }
+    // check for chat 
+    checkForChatExist(cUsrId: string, chatUsrId: string): Promise<boolean>{
+        return new Promise(async (resolve, reject) => {
+            try {
+                const chats = await (await this.userModel.findOne({_id: cUsrId}, {chats: 1})).chats;
+                // filter the chat to find chatUser
+                const isChatUserExist = Boolean(chats.filter(chat => chat.usrid === chatUsrId).length)
+                // check for null
+                if(chats) {
+                    resolve(isChatUserExist)
+                    return
+                }
+                reject("error geting chat usr")
+            } catch(err){reject(err)}
+        })
+    }
     // get Users By usrname
     getUsrsByUsrname(usrname: string, currentUsr: string): Promise<{}[]>{
         return new Promise(async (resolve, reject) => {
@@ -90,23 +107,8 @@ export class UsersService {
                     $match: {usrname: {$regex: usrname}}},{
                     $project: {password: 0, email: 0, chats: 0}}
                 ]) as Omit<LoginSucc, "email" | "password">[]
-                // i need all the users chat id
-                // if it's not null
-                if(matchedUsrs) {
-                    // get the current user chats
-                    const currentUserChats = await (await this.userModel.findOne({"_id": currentUsr}, {chats: 1, _id: 0})).chats;
-                    // filter cUser chats 
-                    const filteredMatchedUsrs = matchedUsrs.map(usr => {
-                        // loop all the queried users to get users has already chat with current user
-                        if(currentUserChats.length === 0) return {...usr, chatId: ""}
-                        for (let chat of currentUserChats) {
-                            if(chat.chatWith.usrid === usr._id.toString()) {
-                                return {...usr, chatId: chat.chatId}
-                            }
-                            return {...usr, chatId: ""}
-                        }
-                    })
-                    resolve(filteredMatchedUsrs)
+                if(matchedUsrs){
+                    resolve(matchedUsrs)
                     return
                 }
                 reject(null)
@@ -134,24 +136,6 @@ export class UsersService {
                 }
                 // no err 
                 resolve(usrname)
-            } catch(err){reject(err)}
-        })
-    }
-    // append new message
-    pushNewMessageIntoChat(userId: string, newMessage: ChatMessage, chatId: string){
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.userModel.updateOne({"_id": userId}, {$push: {"chats.$[elem].chatMessages": newMessage}}, {arrayFilters: [{"elem.chatId": chatId}]})
-                resolve("message added Succesfly")
-            } catch(err) {reject(err)}
-        })
-    }
-    // get chat's messages
-    getChatMessages(cUsrId: string, chatId: string){
-        return new Promise(async (resolve, reject) => {
-            try {
-                const dbres = await this.userModel.findOne({"_id": cUsrId}, {'chats': {$elemMatch: {'chatId': chatId}}}, {projection: {'chats.chatMessages': 1, '_id': 0}})
-                resolve(dbres.chats[0].chatMessages)
             } catch(err){reject(err)}
         })
     }
