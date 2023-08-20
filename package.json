@@ -29,6 +29,7 @@
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/platform-socket.io": "^9.0.0",
+    "@nestjs/serve-static": "^4.0.0",
     "@nestjs/websockets": "^9.4.3",
     "mongodb": "^5.5.0",
     "mongoose": "^7.1.0",
