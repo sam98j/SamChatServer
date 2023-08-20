@@ -2,10 +2,11 @@ import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common'
 import { LoginDTO, RegisterDTO } from './auth.interface';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) {}
+    constructor(private authService: AuthService, private configService: ConfigService) {}
     @UseGuards(AuthGuard('local'))
     // implement login handler
     @Post('login')
