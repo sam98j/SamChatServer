@@ -1,29 +1,29 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument } from "mongoose";
-import { SingleChat } from "./users.interface";
-import bcrypt from 'bcryptjs'
+/* eslint-disable no-mixed-spaces-and-tabs */
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
+import { SingleChat } from './users.interface';
 
 export type UserDocument = HydratedDocument<User>
 
 @Schema()
 export class User {
     @Prop({required: true})
-    name: string;
+    	name: string;
+    @Prop({required: true, unique: true})
+    	email: string;
     @Prop({required: true})
-    email: string;
-    @Prop({required: true})
-    password: string;
+    	password: string;
     @Prop()
-    avatar: string
+    	avatar: string;
     @Prop()
-    socket_id: string | null
+    	socket_id: string | null;
     @Prop()
-    chats: SingleChat[]
+    	chats: SingleChat[];
+    @Prop({required: true, unique: true})
+    	usrname: string;
     @Prop()
-    usrname: string
-    @Prop()
-    onlineStatus: string
+    	onlineStatus: string;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User)
+export const UserSchema = SchemaFactory.createForClass(User);
 

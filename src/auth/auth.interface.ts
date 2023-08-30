@@ -8,4 +8,5 @@ export interface RegisterDTO {
     password: string;
     name: string;
     avatar?: string;
+    usrname: string
 }

@@ -1,21 +1,27 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
-import { LoginDTO, RegisterDTO } from './auth.interface';
+/* eslint-disable no-mixed-spaces-and-tabs */
+import { BadRequestException, Body, Controller, HttpException, HttpStatus, Post, Request, UseGuards } from '@nestjs/common';
+import { RegisterDTO } from './auth.interface';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService, private configService: ConfigService) {}
+	constructor(private authService: AuthService) {}
     @UseGuards(AuthGuard('local'))
-    // implement login handler
     @Post('login')
-    async login(@Request() req) {
-        return this.authService.login(req.user)
-    }
+	async login(@Request() req) {
+		return this.authService.login(req.user);
+	}
     // signup handler
     @Post('signup')
-    async signup() {
-        return ""
+    async signup(@Body() usrDTO: RegisterDTO) {
+    	try {
+    		const usr = await this.authService.signUp(usrDTO);
+    		// check form null
+    		if(usr){return usr;}
+    		return new BadRequestException('User is Already Exist');
+    	} catch (error) {
+    		return new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    	}
     }
 }

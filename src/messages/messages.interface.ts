@@ -1,8 +1,8 @@
 // message status enum
 export enum MessageStatus {
-    'SENT' = "SENT",
+    'SENT' = 'SENT',
     'DELEVERED' = 'DELEVERED',
-    'READED' = "READED"
+    'READED' = 'READED'
 }
 
 // chat Message interface

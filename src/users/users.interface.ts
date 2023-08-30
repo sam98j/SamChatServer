@@ -1,5 +1,3 @@
-import { RegisterDTO } from "src/auth/auth.interface";
-import { ChatMessage } from "src/messages/messages.interface";
 
 // Login Successfly Response
 export interface LoginSucc {
