@@ -19,7 +19,7 @@ export class UsersService {
 			const salt = await bcrypt.genSalt();
 			const hashedPassword = await bcrypt.hash(user.password, salt);
 			user.password = hashedPassword;
-			const newUsr = new this.userModel(user);
+			const newUsr = new this.userModel({...user, onlineStatus: 'online'});
 			newUsr.save();
 			return {name: newUsr.name, email: newUsr.email, avatar: newUsr.avatar, _id: newUsr.id} as UserDocument;
 		} catch (error) {return Promise.reject('db err');}
