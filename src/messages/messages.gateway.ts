@@ -72,7 +72,6 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   // message readed
   @SubscribeMessage('message_readed')
   async messageReadedHandler(@MessageBody() msg: {msgId: string, senderId: string}){
-  	console.log('message reded', msg.msgId, msg.senderId);
   	try {
   		// connect to the db to update the socket id
   		const {socket_id} = await this.userService.getUserSocketId(msg.senderId);

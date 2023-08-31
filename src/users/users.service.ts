@@ -65,13 +65,9 @@ export class UsersService {
 				{ socket_id: 1, _id: 0 },
 			);
 			// check if user is not null (user is exist)
-			if (userSocketId) {
-				return userSocketId;
-			}
+			if (userSocketId) {return userSocketId;}
 			return null;
-		} catch (err) {
-			return err;
-		}
+		} catch (err) {return Promise.reject('db error');}
 	}
 	// get users chats
 	async getUserChats(usrId: string): Promise<SingleChat[]> {
@@ -99,12 +95,8 @@ export class UsersService {
 				chats.filter((chat) => chat.usrid === chatUsrId).length,
 			);
 			// check for null
-			if (chats) {
-				return isChatUserExist;
-			}
-		} catch (err) {
-			return err;
-		}
+			return isChatUserExist;
+		} catch (err) {return Promise.reject('Db Error');}
 	}
 	// get Users By usrname
 	async getUsrsByUsrname(usrname: string) {
