@@ -15,6 +15,7 @@ export class AuthController {
     // signup handler
     @Post('signup')
     async signup(@Body() usrDTO: RegisterDTO) {
+    	console.log(usrDTO);
     	try {
     		const usr = await this.authService.signUp(usrDTO);
     		// check form null
