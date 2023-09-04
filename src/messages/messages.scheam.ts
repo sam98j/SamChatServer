@@ -19,6 +19,10 @@ export class Message implements ChatMessage {
     	date: string | null;
     @Prop()
     	receiverId: string;
+    @Prop()
+    	isItTextMsg: boolean;
+    @Prop()
+    	voiceNoteDuration: string;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

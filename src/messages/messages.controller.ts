@@ -43,12 +43,13 @@ export class MessagesController {
     		// get unReaded Messages
     		const unReadedMsgs = chatMessages.filter(msg => msg.receiverId === req.user.userId && msg.status === MessageStatus.DELEVERED).length;
     		// chat last message
-    		const {text, date} = chatMessages[chatMessages.length -1 ];
+    		const {text, date, isItTextMsg} = chatMessages[chatMessages.length -1 ];
     		// last msg date
     		const lastMsgDate = new Date(date);
     		// return data
     		return {
-    			lastMsgText: text,
+    			isItTextMsg,
+    			lastMsgText: isItTextMsg ? text : '',
     			unReadedMsgs,
     			date: `${lastMsgDate.getHours()}:${lastMsgDate.getMinutes()}`
     		};

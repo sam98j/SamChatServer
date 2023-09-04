@@ -101,7 +101,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   		const connectedUserId = client.handshake.query.client_id as string;
   		// const last seen
   		const date = new Date();
-  		const lastSeen = `last seen ${date.getDate()}-${date.getMonth()} ${date.getHours()}:${date.getMinutes()}`;
+  		const lastSeen = `${date.getDate()}-${date.getMonth()} ${date.getHours()}:${date.getMinutes()}`;
   		await this.userService.setUsrOnlineStatus(connectedUserId, lastSeen);
   		this.wss.emit('usr_online_status', {id: connectedUserId, status: lastSeen});
   	} catch(err){return err;}
