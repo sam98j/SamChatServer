@@ -43,7 +43,7 @@ export class MessagesController {
     		// get unReaded Messages
     		const unReadedMsgs = chatMessages.filter(msg => msg.receiverId === req.user.userId && msg.status === MessageStatus.DELEVERED).length;
     		// chat last message
-    		const {text, date, isItTextMsg} = chatMessages[chatMessages.length -1 ];
+    		const {text, date, isItTextMsg, voiceNoteDuration, senderId, status} = chatMessages[chatMessages.length -1 ];
     		// last msg date
     		const lastMsgDate = new Date(date);
     		// return data
@@ -51,6 +51,9 @@ export class MessagesController {
     			isItTextMsg,
     			lastMsgText: isItTextMsg ? text : '',
     			unReadedMsgs,
+    			voiceNoteDuration,
+    			senderId,
+    			status,
     			date: `${lastMsgDate.getHours()}:${lastMsgDate.getMinutes()}`
     		};
     	} catch (error) {return new HttpException('Server Err', HttpStatus.INTERNAL_SERVER_ERROR);}
