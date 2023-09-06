@@ -74,7 +74,7 @@ export class UsersService {
 		try {
 			const chats = await (
 				await this.userModel.findOne({ _id: usrId }, { _id: 0 })
-			).chats;
+			).chats.reverse();
 			// chceck for null
 			if (chats) {
 				return chats;
@@ -175,5 +175,13 @@ export class UsersService {
 		} catch (err) {
 			return err;
 		}
+	}
+	// get user profile
+	async getUsrProfileData(usrId: string){
+		try {
+			const usrProfileData = await this.userModel.findOne({_id: usrId}, {name: 1, avatar: 1, usrname: 1});
+			if(usrProfileData)return usrProfileData;
+			return null;
+		} catch (error) {return Promise.reject('db error');}
 	}
 }

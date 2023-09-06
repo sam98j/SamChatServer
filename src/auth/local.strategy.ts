@@ -1,6 +1,6 @@
 import {Strategy} from 'passport-local';
 import {PassportStrategy} from '@nestjs/passport';
-import {BadGatewayException, Injectable, UnauthorizedException} from '@nestjs/common';
+import {BadGatewayException, Injectable} from '@nestjs/common';
 // import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
 
@@ -14,10 +14,8 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 		try {
 			const user = await this.userService.getUserByCred({email: username, password});
 			// if user is not authentecated
-			if(!user) {
-				throw new UnauthorizedException();
-			}
-			return user;
-		} catch (error) {throw new BadGatewayException;}
+			if(user) {return user;}
+			return;
+		} catch (error) {throw new BadGatewayException();}
 	}
 }

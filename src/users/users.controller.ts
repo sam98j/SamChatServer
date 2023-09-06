@@ -1,5 +1,5 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
-import { Controller, Get, HttpException, HttpStatus, Param, Request, UseGuards } from '@nestjs/common';
+import { BadGatewayException, Controller, Get, HttpException, HttpStatus, Param, Request, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -29,5 +29,14 @@ export class UsersController {
     		}
     		return usrOnlineStatus;
     	} catch(err) {return new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);}
+    }
+	// get user Profile
+	@UseGuards(AuthGuard('jwt'))
+	@Get('profile/:id')
+    async getUserProfile(@Param('id') id: string){
+    	try {
+    		const usrname = await this.userService.getUsrProfileData(id);
+    		return usrname;
+    	} catch (error) {throw new BadGatewayException('');}
     }
 }
