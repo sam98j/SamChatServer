@@ -4,6 +4,11 @@ export enum MessageStatus {
     'DELEVERED' = 'DELEVERED',
     'READED' = 'READED'
 }
+// chat user actions
+export enum ChatUserActions {
+    'TYPEING' = 'TYPEING',
+    'RECORDING_VOICE' = 'RECORDING_VOICE',
+}
 
 // chat Message interface
 export interface ChatMessage {

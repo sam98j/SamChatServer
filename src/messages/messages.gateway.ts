@@ -2,7 +2,7 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer,  } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UsersService } from 'src/users/users.service';
-import { ChatMessage, MessageStatus } from './messages.interface';
+import { ChatMessage, ChatUserActions, MessageStatus } from './messages.interface';
 import { MessagesService } from './messages.service';
 
 @WebSocketGateway({cors: true})
@@ -48,18 +48,18 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
   // chatusr_start_typing
   @SubscribeMessage('chatusr_typing_status')
-  async chatUsrStartTyping(@MessageBody() msg: {chatUsrId: string, status: boolean}){
+  async chatUsrStartTyping(@MessageBody() msg: {chatUsrId: string, action: ChatUserActions}){
   	try {
   		// connect to the db to update the socket id
   		const {socket_id} = await this.userService.getUserSocketId(msg.chatUsrId);
-  		console.log(socket_id);
   		// send the chat usr status to the client
-  		this.wss.to(socket_id).emit('chatusr_typing_status', msg.status);
+  		this.wss.to(socket_id).emit('chatusr_typing_status', msg.action);
   	} catch(err){return err;}
   }
   // message delevered
   @SubscribeMessage('message_delevered')
   async messageDeleveredHandler(@MessageBody() msg: {msgId: string, senderId: string}){
+  	console.log('message delevered');
   	try {
   		// connect to the db to update the socket id
   		const {socket_id} = await this.userService.getUserSocketId(msg.senderId);
@@ -72,6 +72,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   // message readed
   @SubscribeMessage('message_readed')
   async messageReadedHandler(@MessageBody() msg: {msgId: string, senderId: string}){
+  	console.log('message readed');
   	try {
   		// connect to the db to update the socket id
   		const {socket_id} = await this.userService.getUserSocketId(msg.senderId);
