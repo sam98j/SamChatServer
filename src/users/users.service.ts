@@ -19,6 +19,7 @@ export class UsersService {
 			const salt = await bcrypt.genSalt();
 			const hashedPassword = await bcrypt.hash(user.password, salt);
 			user.password = hashedPassword;
+			user.avatar = 'https://xsgames.co/randomusers/avatar.php?g=male';
 			const newUsr = new this.userModel({...user, onlineStatus: 'online'});
 			newUsr.save();
 			return {name: newUsr.name, email: newUsr.email, avatar: newUsr.avatar, _id: newUsr.id} as UserDocument;
@@ -121,30 +122,19 @@ export class UsersService {
 	// add new chat
 	async addNewChat(userId: string, newChat: SingleChat) {
 		try {
-			await this.userModel.updateOne(
-				{ _id: userId },
-				{ $push: { chats: newChat } },
-			);
+			await this.userModel.updateOne({ _id: userId },{ $push: { chats: newChat } });
 			return 'chat added Succesfly';
-		} catch (err) {
-			return err;
-		}
+		} catch (err) {return err;}
 	}
 	// get user name
-	async getUserName(usrid: string): Promise<string> {
+	async getUserData(usrid: string): Promise<Pick<LoginSucc, 'avatar' | 'name'>> {
 		try {
-			const usrname = (
-				await this.userModel.findOne({ _id: usrid }, { name: 1, _id: 0 })
-			).name;
+			const {avatar, name} = (await this.userModel.findOne({ _id: usrid }, { name: 1, _id: 0, avatar: 1 }));
 			// check for null
-			if (!usrname) {
-				return null;
-			}
+			if (!avatar && !name) {return null;}
 			// no err
-			return usrname;
-		} catch (err) {
-			return err;
-		}
+			return {avatar, name};
+		} catch (err) {return err;}
 	}
 	// set usr onine status
 	async setUsrOnlineStatus(cUsrId: string, status: string) {

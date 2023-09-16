@@ -27,33 +27,37 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   		// if chat is exist then termenate the process
   		if(isChatExist) return;
   		// get current usr name
-  		const currentUsrName = await this.userService.getUserName(message.senderId);
+  		const {avatar: cUserAvatar, name: cUserName} = await this.userService.getUserData(message.senderId);
   		// get chatWith usrname
-  		const chatWithUsrname = await this.userService.getUserName(message.receiverId);
+  		const {avatar: chatUsrAvatar, name: chatUsrName} = await this.userService.getUserData(message.receiverId);
   		// chat with current usr
   		const currentUsrAsChatWith = {
   			usrid: message.senderId,
-  			usrname: currentUsrName
+  			usrname: cUserName,
+  			avatar: cUserAvatar
   		};
   		// chat with current usr
   		const chatWithUsr = {
   			usrid: message.receiverId,
-  			usrname: chatWithUsrname
+  			usrname: chatUsrName,
+  			avatar: chatUsrAvatar
   		};
   		// add new chat to the initlizer user
   		await this.userService.addNewChat(message.senderId, chatWithUsr);
   		// add new chat to the other user
   		await this.userService.addNewChat(message.receiverId, currentUsrAsChatWith);
+  		// send the create chat to the receiver usr
+  		this.wss.to(socket_id).emit('new_chat_created', currentUsrAsChatWith);
   	} catch(err){return err;}
   }
   // chatusr_start_typing
   @SubscribeMessage('chatusr_typing_status')
-  async chatUsrStartTyping(@MessageBody() msg: {chatUsrId: string, action: ChatUserActions}){
+  async chatUsrStartTyping(@MessageBody() msg: {chatUsrId: string, action: ChatUserActions, cUsrId: string}){
   	try {
   		// connect to the db to update the socket id
   		const {socket_id} = await this.userService.getUserSocketId(msg.chatUsrId);
   		// send the chat usr status to the client
-  		this.wss.to(socket_id).emit('chatusr_typing_status', msg.action);
+  		this.wss.to(socket_id).emit('chatusr_typing_status', {action: msg.action, actionSender: msg.cUsrId});
   	} catch(err){return err;}
   }
   // message delevered
