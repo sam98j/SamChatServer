@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './users.schema';
 import { Model } from 'mongoose';
 import { LoginDTO, RegisterDTO } from 'src/auth/auth.interface';
-import { LoginSucc, SingleChat } from './users.interface';
+import { ChatProfile, LoginSucc, SingleChat } from './users.interface';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -173,5 +173,15 @@ export class UsersService {
 			if(usrProfileData)return usrProfileData;
 			return null;
 		} catch (error) {return Promise.reject('db error');}
+	}
+	// get chat profile
+	async getChatProfile(chatId: string){
+		try {
+			const chatProfile = await this.userModel.findOne({_id: chatId}, {name: 1, email: 1, avatar: 1}) as ChatProfile;
+			// check for error
+			if(!chatProfile) return null;
+			// there's no error
+			return chatProfile;
+		} catch (error) {return Promise.reject('db err');}
 	}
 }

@@ -13,3 +13,9 @@ export interface SingleChat {
     usrid: string, 
     usrname: string
 }
+// chat profile
+export interface ChatProfile {
+    avatar: string;
+    name: string;
+    email: string
+}

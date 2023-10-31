@@ -39,4 +39,15 @@ export class UsersController {
     		return usrname;
     	} catch (error) {throw new BadGatewayException('');}
     }
+	// get Chat Profile
+	@Get('chat_profile/:id')
+	async getChatPorfile(@Param('id') id: string){
+		try {
+			const chatProfile = await this.userService.getChatProfile(id);
+			// check for null
+    		if(!chatProfile) {return new HttpException(null, HttpStatus.BAD_REQUEST);}
+			// there is no error
+			return chatProfile;
+		} catch (error) {throw new BadGatewayException('');}
+	}
 }
