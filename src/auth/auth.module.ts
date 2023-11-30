@@ -11,9 +11,9 @@ import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-	imports: [UsersModule, PassportModule, JwtModule.register({secret: JwtConstants.secret}), ConfigModule],
-	controllers: [AuthController],
-	providers: [AuthService, UsersService, LocalStrategy, JwtStrategy],
-	exports: [UsersModule, UsersService, AuthService, JwtModule]
+  imports: [UsersModule, PassportModule, JwtModule.register({ secret: JwtConstants.secret }), ConfigModule],
+  controllers: [AuthController],
+  providers: [AuthService, UsersService, LocalStrategy, JwtStrategy],
+  exports: [UsersModule, UsersService, AuthService, JwtModule],
 })
 export class AuthModule {}

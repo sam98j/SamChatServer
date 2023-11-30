@@ -10,12 +10,17 @@ import { MessagesService } from './messages/messages.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
-	imports: [AuthModule,MongooseModule.forRootAsync({
-		imports: [ConfigModule],
-		inject: [ConfigService],
-		useFactory:async (configService: ConfigService) => ({uri: configService.get('MONGODB_URI')})
-	}), MessagesModule, ConfigModule.forRoot({isGlobal: true})],
-	controllers: [AuthController, MessagesController],
-	providers: [AuthService, MessagesGateway, MessagesService],
+  imports: [
+    AuthModule,
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({ uri: configService.get('MONGODB_URI') }),
+    }),
+    MessagesModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+  ],
+  controllers: [AuthController, MessagesController],
+  providers: [AuthService, MessagesGateway, MessagesService],
 })
 export class AppModule {}
