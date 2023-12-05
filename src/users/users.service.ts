@@ -21,7 +21,6 @@ export class UsersService {
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(user.password, salt);
       user.password = hashedPassword;
-      user.avatar = 'https://xsgames.co/randomusers/avatar.php?g=male';
       const newUsr = new this.userModel({ ...user, onlineStatus: 'online' });
       newUsr.save();
       return { name: newUsr.name, email: newUsr.email, avatar: newUsr.avatar, _id: newUsr.id } as UserDocument;

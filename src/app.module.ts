@@ -8,6 +8,8 @@ import { MessagesModule } from './messages/messages.module';
 import { MessagesController } from './messages/messages.controller';
 import { MessagesService } from './messages/messages.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
     MessagesModule,
     ConfigModule.forRoot({ isGlobal: true }),
+    ServeStaticModule.forRoot({ rootPath: join(__dirname, '..', 'client') }),
   ],
   controllers: [AuthController, MessagesController],
   providers: [AuthService, MessagesGateway, MessagesService],

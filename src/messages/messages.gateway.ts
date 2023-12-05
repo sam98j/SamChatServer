@@ -23,10 +23,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   async receiveMessage(@MessageBody() message: Omit<ChatMessage, 'readed'>, @ConnectedSocket() client: Socket) {
     try {
       // add the message to the db
-      await this.messageService.addNewMessage({
-        ...message,
-        status: MessageStatus.SENT,
-      });
+      await this.messageService.addNewMessage({ ...message, status: MessageStatus.SENT });
       // connect to the db to update the socket id
       const { socket_id } = await this.userService.getUserSocketId(message.receiverId);
       // send the message to the receiver
@@ -145,7 +142,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       const connectedUserId = client.handshake.query.client_id as string;
       // const last seen
       const date = new Date();
-      const lastSeen = `${date.getDate()}-${date.getMonth()} ${date.getHours()}:${date.getMinutes()}`;
+      const lastSeen = date.toString();
       await this.userService.setUsrOnlineStatus(connectedUserId, lastSeen);
       this.wss.emit('usr_online_status', {
         id: connectedUserId,

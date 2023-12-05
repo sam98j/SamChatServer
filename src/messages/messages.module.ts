@@ -6,11 +6,12 @@ import { MessagesController } from './messages.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Message, MessageSchema } from './messages.scheam';
 import { MessagesService } from './messages.service';
+import { FileService } from 'src/services/files';
 
 @Module({
   imports: [UsersModule, MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }])],
-  providers: [MessagesGateway, UsersService, MessagesService],
+  providers: [MessagesGateway, UsersService, MessagesService, FileService],
   controllers: [MessagesController],
-  exports: [MongooseModule],
+  exports: [MongooseModule, FileService],
 })
 export class MessagesModule {}

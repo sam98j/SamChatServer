@@ -5,9 +5,9 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(helmet());
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe());
-  await app.listen(2000);
+  await app.listen(process.env.PORT);
 }
 bootstrap();

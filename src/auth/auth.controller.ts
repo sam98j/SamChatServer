@@ -6,25 +6,33 @@ import {
   HttpException,
   HttpStatus,
   Post,
-  Request,
+  Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { RegisterDTO } from './auth.interface';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  async login(@Request() req) {
+  async login(@Req() req) {
     return this.authService.login(req.user);
   }
   // signup handler
   @Post('signup')
-  async signup(@Body() usrDTO: RegisterDTO) {
-    console.log(usrDTO);
+  @UseInterceptors(FileInterceptor('profile_img'))
+  async signup(@Req() req: Request, @Body() usrDTO: RegisterDTO, @UploadedFile() file: Express.Multer.File) {
+    const { hostname, protocol } = req;
+    const PORT = process.env.PORT;
+    const profileImgURL = `${protocol}://${hostname}:${PORT}/${file.originalname}`;
+    usrDTO.avatar = profileImgURL;
     try {
       const usr = await this.authService.signUp(usrDTO);
       // check form null
