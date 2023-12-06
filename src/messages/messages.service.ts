@@ -40,14 +40,32 @@ export class MessagesService {
   }
   // get chat users messages
   // update message status
-  async getChatUsersMessages(fUserId: string, sUserId: string): Promise<ChatMessage[]> {
+  async getChatUsersMessages(
+    fUserId: string,
+    sUserId: string,
+    pageSize: number,
+    pageNumber: number,
+  ): Promise<ChatMessage[]> {
     try {
-      const messages = await this.messageModel.find({
-        $and: [
-          { $or: [{ senderId: fUserId }, { senderId: sUserId }] },
-          { $or: [{ receiverId: fUserId }, { receiverId: sUserId }] },
-        ],
-      });
+      // messages count
+      const messagesCount = await this.messageModel
+        .find({
+          $and: [
+            { $or: [{ senderId: fUserId }, { senderId: sUserId }] },
+            { $or: [{ receiverId: fUserId }, { receiverId: sUserId }] },
+          ],
+        })
+        .count();
+      // check if batch size is begger than whole collection size
+      const batchSize = pageSize * pageNumber >= messagesCount ? 0 : messagesCount - pageSize * pageNumber;
+      const messages = await this.messageModel
+        .find({
+          $and: [
+            { $or: [{ senderId: fUserId }, { senderId: sUserId }] },
+            { $or: [{ receiverId: fUserId }, { receiverId: sUserId }] },
+          ],
+        })
+        .skip(batchSize);
       return Promise.resolve(messages);
     } catch (err) {
       return Promise.reject('db error');

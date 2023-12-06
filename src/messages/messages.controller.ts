@@ -1,5 +1,5 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
-import { Controller, Get, HttpException, HttpStatus, Param, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/users/users.service';
 import { MessagesService } from './messages.service';
@@ -29,9 +29,13 @@ export class MessagesController {
   // chat's message with specific usr
   @UseGuards(AuthGuard('jwt'))
   @Get('/getchatmessages/:chaUsrtId')
-  async chatMessagesHandler(@Request() req, @Param('chaUsrtId') chaUsrtId: string) {
+  async chatMessagesHandler(
+    @Request() req,
+    @Param('chaUsrtId') chaUsrtId: string,
+    @Query('msgs_batch') msgsBatch: number,
+  ) {
     try {
-      const res = await this.messageService.getChatUsersMessages(req.user.userId, chaUsrtId);
+      const res = await this.messageService.getChatUsersMessages(req.user.userId, chaUsrtId, 10, msgsBatch);
       return res;
     } catch (err) {
       return new HttpException('Internal Server err', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -43,7 +47,7 @@ export class MessagesController {
   async chatPreviewData(@Request() req, @Param('chatUsrId') chatUsrId: string) {
     try {
       // get chat messages
-      const chatMessages = await await this.messageService.getChatUsersMessages(req.user.userId, chatUsrId);
+      const chatMessages = await await this.messageService.getChatUsersMessages(req.user.userId, chatUsrId, 5, 1);
       // get unReaded Messages
       const unReadedMsgs = chatMessages.filter(
         (msg) => msg.receiverId === req.user.userId && msg.status === MessageStatus.DELEVERED,
