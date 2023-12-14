@@ -10,11 +10,12 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UsersService } from 'src/users/users.service';
-import { ChatMessage, ChatUserActions, MessageStatus } from './messages.interface';
+import { ChatMessage, ChatUserActions, MessageStatus, MultiChunksMessage } from './messages.interface';
 import { MessagesService } from './messages.service';
 
 @WebSocketGateway({ cors: true })
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  // constructor
   constructor(private userService: UsersService, private messageService: MessagesService) {}
   // web socket server
   @WebSocketServer() wss: Server;
@@ -29,10 +30,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       // send the message to the receiver
       this.wss.to(socket_id).emit('message', { ...message, status: MessageStatus.SENT });
       // notify sender user about msg sent
-      client.emit('message_status', {
-        msgId: message._id,
-        status: MessageStatus.SENT,
-      });
+      client.emit('message_status', { msgId: message._id, status: MessageStatus.SENT });
       // check for chat existne
       const isChatExist = await this.userService.checkForChatExist(message.senderId, message.receiverId);
       // if chat is exist then termenate the process
@@ -42,17 +40,9 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       // get chatWith usrname
       const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(message.receiverId);
       // chat with current usr
-      const currentUsrAsChatWith = {
-        usrid: message.senderId,
-        usrname: cUserName,
-        avatar: cUserAvatar,
-      };
+      const currentUsrAsChatWith = { usrid: message.senderId, usrname: cUserName, avatar: cUserAvatar };
       // chat with current usr
-      const chatWithUsr = {
-        usrid: message.receiverId,
-        usrname: chatUsrName,
-        avatar: chatUsrAvatar,
-      };
+      const chatWithUsr = { usrid: message.receiverId, usrname: chatUsrName, avatar: chatUsrAvatar };
       // add new chat to the initlizer user
       await this.userService.addNewChat(message.senderId, chatWithUsr);
       // add new chat to the other user
@@ -62,6 +52,63 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     } catch (err) {
       return err;
     }
+  }
+  // multi chunks message
+  @SubscribeMessage('multi_chunks_message')
+  async multiChunksMessageHandler(@MessageBody() msg: MultiChunksMessage, @ConnectedSocket() client: Socket) {
+    console.log(msg.data._id);
+    if (this.messageService.hasChunk(msg.data._id)) {
+      console.log('not first chunk');
+      const oldMessage = this.messageService.getChunk(msg.data._id) as { msg: ChatMessage; content: string[] };
+      const newMessage = { msg: oldMessage.msg, content: [...oldMessage.content, msg.data.content] } as {
+        msg: ChatMessage;
+        content: string[];
+      };
+      this.messageService.addChunk(msg.data._id, newMessage);
+      client.emit('chunk_recieved', 'chunk done');
+      // terminate if it's not last chunk
+      if (!msg.isLastChunk) return;
+      // get all file's chunks
+      const fullFileContent = this.messageService.getChunk(msg.data._id).content as string[];
+      // get message
+      const message = this.messageService.getChunk(msg.data._id).msg as ChatMessage;
+      // combine all file's chunks
+      const file = fullFileContent.join('');
+      try {
+        // add the message to the db
+        await this.messageService.addNewMessage({ ...message, content: file, status: MessageStatus.SENT });
+        // connect to the db to update the socket id
+        const { socket_id } = await this.userService.getUserSocketId(message.receiverId);
+        // send the message to the receiver
+        this.wss.to(socket_id).emit('message', { ...message, status: MessageStatus.SENT });
+        // notify sender user about msg sent
+        client.emit('message_status', { msgId: message._id, status: MessageStatus.SENT });
+        // check for chat existne
+        const isChatExist = await this.userService.checkForChatExist(message.senderId, message.receiverId);
+        // if chat is exist then termenate the process
+        if (isChatExist) return;
+        // get current usr name
+        const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(message.senderId);
+        // get chatWith usrname
+        const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(message.receiverId);
+        // chat with current usr
+        const currentUsrAsChatWith = { usrid: message.senderId, usrname: cUserName, avatar: cUserAvatar };
+        // chat with current usr
+        const chatWithUsr = { usrid: message.receiverId, usrname: chatUsrName, avatar: chatUsrAvatar };
+        // add new chat to the initlizer user
+        await this.userService.addNewChat(message.senderId, chatWithUsr);
+        // add new chat to the other user
+        await this.userService.addNewChat(message.receiverId, currentUsrAsChatWith);
+        // send the create chat to the receiver usr
+        this.wss.to(socket_id).emit('new_chat_created', currentUsrAsChatWith);
+      } catch (err) {
+        return err;
+      }
+      return;
+    }
+    console.log('first chunk');
+    this.messageService.addChunk(msg.data._id, { msg: msg.data, content: [msg.data.content] });
+    client.emit('chunk_recieved', 'chunk done');
   }
   // chatusr_start_typing
   @SubscribeMessage('chatusr_typing_status')

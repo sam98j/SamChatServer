@@ -10,9 +10,12 @@ export class FileService {
     const date = new Date();
     // file time stamp
     const fileTimeStamp = `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDay()}-${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
-    // voice file name
-    const fileName = `${senderId}-${reciverId}-${fileTimeStamp}.webm`;
+    // file row data
     const base64Data = bufferStr.split(',')[1];
+    // file ext
+    const fileExt = bufferStr.split(',')[0].split(':')[1].split('/')[1].split(';')[0];
+    // voice file name
+    const fileName = `${senderId}-${reciverId}-${fileTimeStamp}.${fileExt}`;
     try {
       // create buffer from string
       const buffer = Buffer.from(base64Data, 'base64');

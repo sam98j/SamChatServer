@@ -3,7 +3,7 @@ import { Controller, Get, HttpException, HttpStatus, Param, Query, Request, UseG
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/users/users.service';
 import { MessagesService } from './messages.service';
-import { MessageStatus } from './messages.interface';
+import { ChatPreviewData, MessageStatus, MessagesTypes } from './messages.interface';
 
 @Controller('messages')
 export class MessagesController {
@@ -53,19 +53,19 @@ export class MessagesController {
         (msg) => msg.receiverId === req.user.userId && msg.status === MessageStatus.DELEVERED,
       ).length;
       // chat last message
-      const { text, date, isItTextMsg, voiceNoteDuration, senderId, status } = chatMessages[chatMessages.length - 1];
-      // last msg date
-      const lastMsgDate = new Date(date);
-      // return data
-      return {
-        isItTextMsg,
-        lastMsgText: isItTextMsg ? text : '',
+      const { content, date, type, voiceNoteDuration, senderId, status } = chatMessages[chatMessages.length - 1];
+      // chat preview data
+      const chatPreviewData: ChatPreviewData = {
+        type,
+        lastMsgText: type === MessagesTypes.TEXT ? content : '',
         unReadedMsgs,
         voiceNoteDuration,
         senderId,
         status,
-        date: `${lastMsgDate.getHours()}:${lastMsgDate.getMinutes()}`,
+        date,
       };
+      // return data
+      return chatPreviewData;
     } catch (error) {
       return new HttpException('Server Err', HttpStatus.INTERNAL_SERVER_ERROR);
     }

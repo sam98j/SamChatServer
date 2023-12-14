@@ -10,14 +10,37 @@ export enum ChatUserActions {
   'RECORDING_VOICE' = 'RECORDING_VOICE',
 }
 
+// message types
+export enum MessagesTypes {
+  TEXT = 'TEXT',
+  VIDEO = 'VIDEO',
+  PHOTO = 'PHOTO',
+  FILE = 'FILE',
+  VOICENOTE = 'VOICENOTE',
+}
 // chat Message interface
 export interface ChatMessage {
   _id: string;
-  text: string;
+  content: string;
+  type: MessagesTypes;
   senderId: string;
   receiverId: string;
   status: MessageStatus | null;
   date: string;
-  isItTextMsg: boolean;
   voiceNoteDuration: string;
+}
+// chat preview data
+export interface ChatPreviewData {
+  date: string;
+  lastMsgText: string;
+  unReadedMsgs: number;
+  type: MessagesTypes;
+  voiceNoteDuration: string;
+  senderId: string;
+  status: MessageStatus;
+}
+// multi chunks message
+export interface MultiChunksMessage {
+  data: ChatMessage;
+  isLastChunk: boolean;
 }
