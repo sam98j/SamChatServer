@@ -73,8 +73,19 @@ export class MessagesService {
     }
   }
   // add chunk
-  addChunk(key: string, value: { msg: ChatMessage; content: string[] }) {
-    this.multiChunksMessages.set(key, value);
+  addChunk(key: string, value: ChatMessage) {
+    // if there is no chunk
+    if (!this.hasChunk(key)) {
+      this.multiChunksMessages.set(key, { msg: value, content: [value.content] });
+      return;
+    }
+    // if there is already chunks
+    const oldMessage = this.getChunk(key) as { msg: ChatMessage; content: string[] };
+    const newMessage = { msg: oldMessage.msg, content: [...oldMessage.content, value.content] } as {
+      msg: ChatMessage;
+      content: string[];
+    };
+    this.multiChunksMessages.set(key, newMessage);
   }
   // getChunk
   getChunk(key: string) {
