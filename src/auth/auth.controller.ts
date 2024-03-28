@@ -31,7 +31,7 @@ export class AuthController {
   async signup(@Req() req: Request, @Body() usrDTO: RegisterDTO, @UploadedFile() file: Express.Multer.File) {
     const { hostname, protocol } = req;
     const PORT = process.env.PORT;
-    const profileImgURL = `${protocol}://${hostname}:${PORT}/${file.originalname}`;
+    const profileImgURL = file ? `${protocol}://${hostname}:${PORT}/${file.originalname}` : '';
     usrDTO.avatar = profileImgURL;
     try {
       const usr = await this.authService.signUp(usrDTO);

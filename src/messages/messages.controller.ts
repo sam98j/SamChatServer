@@ -47,7 +47,7 @@ export class MessagesController {
   async chatPreviewData(@Request() req, @Param('chatUsrId') chatUsrId: string) {
     try {
       // get chat messages
-      const chatMessages = await await this.messageService.getChatUsersMessages(req.user.userId, chatUsrId, 5, 1);
+      const { chatMessages } = await this.messageService.getChatUsersMessages(req.user.userId, chatUsrId, 5, 1);
       // get unReaded Messages
       const unReadedMsgs = chatMessages.filter(
         (msg) => msg.receiverId === req.user.userId && msg.status === MessageStatus.DELEVERED,

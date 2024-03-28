@@ -44,3 +44,8 @@ export interface MultiChunksMessage {
   data: ChatMessage;
   isLastChunk: boolean;
 }
+// get chat messages response
+export interface GetChatMessagesRes {
+  chatMessages: ChatMessage[];
+  isLastBatch: boolean;
+}

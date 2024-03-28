@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Message } from './messages.scheam';
 import { Model } from 'mongoose';
-import { ChatMessage, MessageStatus, MessagesTypes } from './messages.interface';
+import { ChatMessage, GetChatMessagesRes, MessageStatus, MessagesTypes } from './messages.interface';
 import { FileService } from 'src/services/files';
 import { hostname } from 'os';
 
@@ -46,28 +46,25 @@ export class MessagesService {
     sUserId: string,
     pageSize: number,
     pageNumber: number,
-  ): Promise<ChatMessage[]> {
+  ): Promise<GetChatMessagesRes> {
     try {
+      // get messages query
+      const getMessagesQuery = {
+        $and: [
+          { $or: [{ senderId: fUserId }, { senderId: sUserId }] },
+          { $or: [{ receiverId: fUserId }, { receiverId: sUserId }] },
+        ],
+      };
       // messages count
-      const messagesCount = await this.messageModel
-        .find({
-          $and: [
-            { $or: [{ senderId: fUserId }, { senderId: sUserId }] },
-            { $or: [{ receiverId: fUserId }, { receiverId: sUserId }] },
-          ],
-        })
-        .count();
+      const messagesCount = await this.messageModel.countDocuments(getMessagesQuery);
+      // is it last batch of chat messages
+      const isLastBatch = pageSize * pageNumber >= messagesCount;
       // check if batch size is begger than whole collection size
-      const batchSize = pageSize * pageNumber >= messagesCount ? 0 : messagesCount - pageSize * pageNumber;
-      const messages = await this.messageModel
-        .find({
-          $and: [
-            { $or: [{ senderId: fUserId }, { senderId: sUserId }] },
-            { $or: [{ receiverId: fUserId }, { receiverId: sUserId }] },
-          ],
-        })
-        .skip(batchSize);
-      return Promise.resolve(messages);
+      const batchSize = isLastBatch ? 0 : messagesCount - pageSize * pageNumber;
+      // fetch splited messages
+      const chatMessages = await this.messageModel.find(getMessagesQuery).skip(batchSize);
+      // return
+      return Promise.resolve({ chatMessages, isLastBatch });
     } catch (err) {
       return Promise.reject('db error');
     }
