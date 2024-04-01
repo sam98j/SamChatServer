@@ -22,9 +22,9 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   // multi chunks message
   @SubscribeMessage('multi_chunks_message')
   async multiChunksMessageHandler(@MessageBody() msg: MultiChunksMessage, @ConnectedSocket() client: Socket) {
-    console.log(msg.data._id, msg.isLastChunk);
     // if it's last chunk
     this.messageService.addChunk(msg.data._id, msg.data);
+    // tell the client about message chunk status
     client.emit('chunk_recieved', 'chunk done');
     // terminate if it's not last chunk
     if (!msg.isLastChunk) return;

@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import { join } from 'path';
+import { FileToWritenData } from './files.interface';
 
 @Injectable()
 export class FileService {
-  async writeFile(fileData: { bufferStr: string; senderId: string; reciverId: string }) {
-    const { bufferStr, senderId, reciverId } = fileData;
+  async writeFile(fileData: FileToWritenData) {
+    const { bufferStr, senderId, receiverId } = fileData;
     // new date
     const date = new Date();
     // file time stamp
@@ -15,7 +16,7 @@ export class FileService {
     // file ext
     const fileExt = bufferStr.split(',')[0].split(':')[1].split('/')[1].split(';')[0];
     // voice file name
-    const fileName = `${senderId}-${reciverId}-${fileTimeStamp}.${fileExt}`;
+    const fileName = `${senderId}-${receiverId}-${fileTimeStamp}.${fileExt}`;
     try {
       // create buffer from string
       const buffer = Buffer.from(base64Data, 'base64');

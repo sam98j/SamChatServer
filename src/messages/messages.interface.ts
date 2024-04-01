@@ -9,7 +9,6 @@ export enum ChatUserActions {
   'TYPEING' = 'TYPEING',
   'RECORDING_VOICE' = 'RECORDING_VOICE',
 }
-
 // message types
 export enum MessagesTypes {
   TEXT = 'TEXT',
@@ -23,6 +22,8 @@ export interface ChatMessage {
   _id: string;
   content: string;
   type: MessagesTypes;
+  fileName: string | null;
+  fileSize: string | null;
   senderId: string;
   receiverId: string;
   status: MessageStatus | null;
@@ -35,6 +36,7 @@ export interface ChatPreviewData {
   lastMsgText: string;
   unReadedMsgs: number;
   type: MessagesTypes;
+  fileName: null | string;
   voiceNoteDuration: string;
   senderId: string;
   status: MessageStatus;

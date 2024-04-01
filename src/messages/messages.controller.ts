@@ -15,18 +15,14 @@ export class MessagesController {
     try {
       const userChats = await this.userService.getUserChats(req.user.userId as string);
       // check for null
-      if (userChats) {
-        return {
-          chats: userChats,
-          userId: req.user.userId,
-        };
-      }
-      return null;
+      if (!userChats) return null;
+      // if usr is loggedin it will recive a list of chats
+      return { chats: userChats, userId: req.user.userId };
     } catch (err) {
       return err;
     }
   }
-  // chat's message with specific usr
+  // chat's messages with specific usr (messages of a single chat)
   @UseGuards(AuthGuard('jwt'))
   @Get('/getchatmessages/:chaUsrtId')
   async chatMessagesHandler(
@@ -53,7 +49,8 @@ export class MessagesController {
         (msg) => msg.receiverId === req.user.userId && msg.status === MessageStatus.DELEVERED,
       ).length;
       // chat last message
-      const { content, date, type, voiceNoteDuration, senderId, status } = chatMessages[chatMessages.length - 1];
+      const { content, date, type, fileName, voiceNoteDuration, senderId, status } =
+        chatMessages[chatMessages.length - 1];
       // chat preview data
       const chatPreviewData: ChatPreviewData = {
         type,
@@ -61,6 +58,7 @@ export class MessagesController {
         unReadedMsgs,
         voiceNoteDuration,
         senderId,
+        fileName,
         status,
         date,
       };

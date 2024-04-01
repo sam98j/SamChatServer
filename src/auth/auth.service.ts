@@ -10,10 +10,7 @@ export class AuthService {
   // login method
   login(user: LoginSucc): { access_token: string; user: LoginSucc } {
     const payload = { email: user.email, sub: user._id };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user,
-    };
+    return { access_token: this.jwtService.sign(payload), user };
   }
   // signup service
   async signUp(newUsr: RegisterDTO) {

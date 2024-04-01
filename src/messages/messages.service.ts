@@ -4,7 +4,7 @@ import { Message } from './messages.scheam';
 import { Model } from 'mongoose';
 import { ChatMessage, GetChatMessagesRes, MessageStatus, MessagesTypes } from './messages.interface';
 import { FileService } from 'src/services/files';
-import { hostname } from 'os';
+import { FileToWritenData } from 'src/services/files.interface';
 
 @Injectable()
 export class MessagesService {
@@ -16,14 +16,18 @@ export class MessagesService {
   // add new message
   async addNewMessage(msg: ChatMessage) {
     try {
+      // if it's not a text message then edite those properties
       if (msg.type !== MessagesTypes.TEXT) {
-        const createdFileName = await this.fileService.writeFile({
-          bufferStr: msg.content,
-          senderId: msg.senderId,
-          reciverId: msg.receiverId,
-        });
-        msg.content = `http://${hostname}:${process.env.PORT}/${createdFileName}`;
+        // destruct needed data
+        const { content: bufferStr, senderId, receiverId } = msg;
+        // data of file to be writen
+        const fileData: FileToWritenData = { bufferStr, senderId, receiverId };
+        // create file and get it's name
+        const createdFileName = await this.fileService.writeFile(fileData);
+        // file path
+        msg.content = `/${createdFileName}`;
       }
+      // insert the file in the database
       await this.messageModel.insertMany([msg]);
       return Promise.resolve('message added');
     } catch (err) {
@@ -40,7 +44,6 @@ export class MessagesService {
     }
   }
   // get chat users messages
-  // update message status
   async getChatUsersMessages(
     fUserId: string,
     sUserId: string,
