@@ -36,9 +36,15 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     const file = fullFileContent.join('');
     try {
       // add the message to the db
-      await this.messageService.addNewMessage({ ...message, content: file, status: MessageStatus.SENT });
+      const msgContent = await this.messageService.addNewMessage({
+        ...message,
+        content: file,
+        status: MessageStatus.SENT,
+      });
       // connect to the db to update the socket id
       const { socket_id } = await this.userService.getUserSocketId(message.receiverId);
+      // check for content falsey value
+      if (msgContent) message.content = msgContent;
       // send the message to the receiver
       this.wss.to(socket_id).emit('message', { ...message, status: MessageStatus.SENT });
       // notify sender user about msg sent

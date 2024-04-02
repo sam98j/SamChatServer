@@ -29,7 +29,10 @@ export class MessagesService {
       }
       // insert the file in the database
       await this.messageModel.insertMany([msg]);
-      return Promise.resolve('message added');
+      // none text message url content
+      const noneTextMsgUrlContent = msg.type === MessagesTypes.TEXT ? '' : msg.content;
+      // resolve the promise
+      return Promise.resolve(noneTextMsgUrlContent);
     } catch (err) {
       return Promise.reject('db err');
     }
