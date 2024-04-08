@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { LoginDTO, RegisterDTO } from 'src/auth/auth.interface';
 import { ChatProfile, LoginSucc, SingleChat } from './users.interface';
 import * as bcrypt from 'bcrypt';
+import { validateEmailInput } from 'src/utils/validations';
 
 @Injectable()
 export class UsersService {
@@ -78,10 +79,8 @@ export class UsersService {
     try {
       const chats = await (await this.userModel.findOne({ _id: usrId }, { _id: 0 })).chats.reverse();
       // chceck for null
-      if (chats) {
-        return chats;
-      }
-      return null;
+      if (!chats) return null;
+      return chats;
     } catch (err) {
       return err;
     }
@@ -165,10 +164,14 @@ export class UsersService {
   }
   // get user profile
   async getUsrProfileData(usrId: string) {
+    // warning implementing database ObjectId validation first
     try {
-      const usrProfileData = await this.userModel.findOne({ _id: usrId }, { name: 1, avatar: 1, usrname: 1 });
-      if (usrProfileData) return usrProfileData;
-      return null;
+      // usr profile data
+      const usrProfileData = await this.userModel.findOne({ _id: usrId }, { name: 1, avatar: 1, usrname: 1, email: 1 });
+      // check if usr is not found
+      if (!usrProfileData) return null;
+      // return founded usr
+      return usrProfileData;
     } catch (error) {
       return Promise.reject('db error');
     }
@@ -186,6 +189,36 @@ export class UsersService {
       return chatProfile;
     } catch (error) {
       return Promise.reject('db err');
+    }
+  }
+  // update usr profile data
+  async updateUsrProfileData(currentUsrId: string, profileField: { fieldname: string; value: string }) {
+    // destruct profile data
+    const { fieldname, value } = profileField;
+    try {
+      // check for email input
+      if (fieldname === 'email') {
+        // email format validation
+        const isEmail = validateEmailInput(value);
+        // if it's not an email
+        if (!isEmail) return new Error('your email it is not an valid email');
+        // check if email is exist
+        const usr = await this.userModel.findOne({ email: value });
+        // if there're usr linked with this email the throw an error
+        if (usr) return new Error('email is already exist, try another one');
+      }
+      // check for usrname input
+      if (fieldname === 'usrname') {
+        // check if email is exist
+        const usr = await this.userModel.findOne({ usrname: value });
+        // if there're usr linked with this email the throw an error
+        if (usr) return new Error('there are another usr with this usrname');
+      }
+      await this.userModel.updateOne({ _id: currentUsrId }, { $set: { [fieldname]: value } });
+      // `usr ${fieldname} is updated successfully`
+      return true;
+    } catch (error) {
+      return Promise.reject('database error');
     }
   }
 }
