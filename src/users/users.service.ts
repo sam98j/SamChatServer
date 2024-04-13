@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 import { LoginDTO, RegisterDTO } from 'src/auth/auth.interface';
 import { ChatProfile, LoginSucc, SingleChat } from './users.interface';
 import * as bcrypt from 'bcrypt';
-import { validateEmailInput } from 'src/utils/validations';
+import { validateEmailInput } from '../utils/validations';
 
 @Injectable()
 export class UsersService {
