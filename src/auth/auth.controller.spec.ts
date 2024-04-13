@@ -9,9 +9,10 @@ describe('AuthController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [AuthModule],
       controllers: [AuthController],
       providers: [AuthService],
-      exports: [AuthModule],
+      exports: [AuthModule, AuthService],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);

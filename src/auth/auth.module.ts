@@ -10,9 +10,7 @@ import { JwtConstants } from './constants';
 import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
-// import { diskStorage } from 'multer';
-// import e from 'express';
-import { multerConfig } from 'src/config/multer';
+import { multerConfig } from '../config/multer';
 
 @Module({
   imports: [
