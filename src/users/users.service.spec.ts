@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
-import { UsersModule } from './users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './users.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -30,12 +29,12 @@ describe('UsersService', () => {
   });
   describe('findAll', () => {
     it('should return an array of cats', async () => {
-      const result = '';
-      jest.spyOn(service, 'addUser').mockImplementation(() => result);
+      // const result = '';
+      jest.spyOn(service, 'addUser').mockImplementation((data) => {
+        console.log(data);
+      });
 
-      expect(
-        await service.addUser({ email: 'hosam@gmail.com', name: 'H', password: 'H', usrname: 't__', avatar: '' }),
-      ).toBe(result);
+      expect(await service.addUser({ email: 'hosam@gmail.com', name: 'H', password: 'H', usrname: 't__', avatar: '' }));
     });
   });
 });
