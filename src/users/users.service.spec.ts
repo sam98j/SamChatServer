@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './users.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LoginDTO, RegisterDTO } from 'src/auth/auth.interface';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -27,14 +28,29 @@ describe('UsersService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-  describe('findAll', () => {
-    it('should return an array of cats', async () => {
+  describe('test usr services', () => {
+    it('add new usr', async () => {
       // const result = '';
-      jest.spyOn(service, 'addUser').mockImplementation((data) => {
-        console.log(data);
-      });
-
-      expect(await service.addUser({ email: 'hosam@gmail.com', name: 'H', password: 'H', usrname: 't__', avatar: '' }));
+      jest.spyOn(service, 'addUser').mockImplementation();
+      // new usr
+      const newUsr = {
+        email: 'hosame@gmail.com',
+        name: 'H',
+        password: 'H',
+        usrname: 't_u_',
+        avatar: '',
+      } as RegisterDTO;
+      expect(await service.addUser(newUsr)).toHaveProperty('name');
+    });
+    it('get usr by email and password', async () => {
+      // const result = '';
+      jest.spyOn(service, 'getUserByCred').mockImplementation();
+      // new usr
+      const usrCred = {
+        email: 'nofaf@mailinator.com',
+        password: 'Pa$$w0rd!',
+      } as LoginDTO;
+      expect(await service.getUserByCred(usrCred)).toBeTruthy();
     });
   });
 });
