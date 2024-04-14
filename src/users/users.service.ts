@@ -16,11 +16,12 @@ export class UsersService {
       // get usr by email or usrname
       const usr = await this.userModel.findOne({ $or: [{ email: user.email }, { usrname: user.usrname }] });
       // check if usr exist
-      if (usr) {
-        return null;
-      }
+      if (usr) return null;
+      // password salt
       const salt = await bcrypt.genSalt();
+      // hashed password
       const hashedPassword = await bcrypt.hash(user.password, salt);
+      // replace regular pass with encypted one
       user.password = hashedPassword;
       const newUsr = new this.userModel({ ...user, onlineStatus: 'online' });
       newUsr.save();
