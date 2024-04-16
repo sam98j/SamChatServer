@@ -13,6 +13,7 @@ export interface LoginSucc {
 export interface SingleChat {
   usrid: string;
   usrname: string;
+  avatar: string;
 }
 // chat profile
 export interface ChatProfile {

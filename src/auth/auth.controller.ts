@@ -29,9 +29,7 @@ export class AuthController {
   @Post('signup')
   @UseInterceptors(FileInterceptor('profile_img'))
   async signup(@Req() req: Request, @Body() usrDTO: RegisterDTO, @UploadedFile() file: Express.Multer.File) {
-    const { hostname, protocol } = req;
-    const PORT = process.env.PORT;
-    const profileImgURL = file ? `${protocol}://${hostname}:${PORT}/${file.originalname}` : '';
+    const profileImgURL = file ? `/${file.originalname}` : '';
     usrDTO.avatar = profileImgURL;
     try {
       const usr = await this.authService.signUp(usrDTO);
