@@ -29,15 +29,16 @@ export class AuthController {
   @Post('signup')
   @UseInterceptors(FileInterceptor('profile_img'))
   async signup(@Req() req: Request, @Body() usrDTO: RegisterDTO, @UploadedFile() file: Express.Multer.File) {
+    // urs profile image url
     const profileImgURL = file ? `/${file.originalname}` : '';
+    // assinge url to the usr
     usrDTO.avatar = profileImgURL;
     try {
       const usr = await this.authService.signUp(usrDTO);
       // check form null
-      if (usr) {
-        return usr;
-      }
-      return new BadRequestException('User is Already Exist');
+      if (!usr) return new BadRequestException('User is Already Exist');
+      // return usr
+      return usr;
     } catch (error) {
       return new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
