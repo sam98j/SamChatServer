@@ -10,6 +10,7 @@ import { MessagesService } from './messages/messages.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -22,6 +23,12 @@ import { join } from 'path';
     MessagesModule,
     ConfigModule.forRoot({ isGlobal: true }),
     ServeStaticModule.forRoot({ rootPath: join(__dirname, '..', 'client') }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
   ],
   controllers: [AuthController, MessagesController],
   providers: [AuthService, MessagesGateway, MessagesService],
