@@ -13,8 +13,7 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
         port: ${{ secrets.PORT }}
-        script: |
-          cd ~/apps/samchat/SamChatServer
-          git pull origin master
-          npm install --only=prod
-          npm run build --if-present
+        run: cd ~/apps/samchat/SamChatServer
+        run: git pull origin master
+        run: npm install --only=prod
+        run: npm run build --if-present
