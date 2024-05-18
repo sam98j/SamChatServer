@@ -1,19 +1,16 @@
 name: Node.js CD
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Deploy to VPS using ssh
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.PRIVATE_KEY }}
-        port: ${{ secrets.PORT }}
-        run: cd ~/apps/samchat/SamChatServer
-        run: git pull origin master
-        run: npm install --only=prod
-        run: npm run build --if-present
+      - name: Deploy to VPS using ssh
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          run: cd ~/apps/samchat/SamChatServer && git pull origin master && npm install --only=prod && npm run build --if-present
