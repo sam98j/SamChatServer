@@ -5,7 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+  // app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.enableCors({
     origin: ['http://localhost:3000', 'https://chat.samapps.xyz'],
   });
