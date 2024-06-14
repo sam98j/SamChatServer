@@ -2,11 +2,13 @@
 import {
   BadGatewayException,
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpException,
   HttpStatus,
   Param,
+  Post,
   Put,
   Query,
   Req,
@@ -16,6 +18,7 @@ import {
 import { UsersService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
 import { LoggedInUsrProfile } from './users.interface';
+import { PushSubscription } from 'web-push';
 
 @Controller('users')
 export class UsersController {
@@ -89,6 +92,17 @@ export class UsersController {
       }
       // there is no error
       return chatProfile;
+    } catch (error) {
+      throw new BadGatewayException('');
+    }
+  }
+  // subscribe to push notifications
+  @UseGuards(AuthGuard('jwt'))
+  @Post('save-subscription')
+  async savePushNotificationSubscription(@Body() subscription: PushSubscription, @Req() req) {
+    try {
+      const res = await this.userService.savePushNotificationSubscription(req.user.userId, subscription);
+      return res;
     } catch (error) {
       throw new BadGatewayException('');
     }
