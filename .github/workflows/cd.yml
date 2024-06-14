@@ -1,7 +1,7 @@
 name: Node.js CD
 on:
   push:
-    branches: [master]
+    branches: [master, feature/push-notifications]
 jobs:
   deploy:
     runs-on: ubuntu-latest

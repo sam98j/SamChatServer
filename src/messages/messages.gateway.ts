@@ -12,11 +12,16 @@ import { Server, Socket } from 'socket.io';
 import { UsersService } from 'src/users/users.service';
 import { ChatMessage, ChatUserActions, MessageStatus, MultiChunksMessage } from './messages.interface';
 import { MessagesService } from './messages.service';
+import { sendNotification, setVapidDetails, PushSubscription } from 'web-push';
 
 @WebSocketGateway({ cors: true })
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // constructor
-  constructor(private userService: UsersService, private messageService: MessagesService) {}
+  constructor(private userService: UsersService, private messageService: MessagesService) {
+    // setup web-push
+    const apiKeys = { publicKey: process.env.PUBLIC_VAPID_KEY, privateKey: process.env.PRIVATE_VAPID_KEY };
+    setVapidDetails('mailto:hosam98j@gmail.com', apiKeys.publicKey, apiKeys.privateKey);
+  }
   // web socket server
   @WebSocketServer() wss: Server;
   // multi chunks message
@@ -42,19 +47,28 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
         status: MessageStatus.SENT,
       });
       // connect to the db to update the socket id
-      const { socket_id } = await this.userService.getUserSocketId(message.receiverId);
+      const { socket_id, pushNotificationSubscription } = await this.userService.getUserNotificationAdress(
+        message.receiverId,
+      );
       // check for content falsey value
       if (msgContent) message.content = msgContent;
       // send the message to the receiver
       this.wss.to(socket_id).emit('message', { ...message, status: MessageStatus.SENT });
+      // send push notification to the message reciver
+      // get current usr name
+      const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(message.senderId);
+      const notificationData = JSON.stringify({
+        senderName: cUserName,
+        senderImg: cUserAvatar,
+        msgText: message.content,
+      });
+      sendNotification(pushNotificationSubscription as PushSubscription, notificationData);
       // notify sender user about msg sent
       client.emit('message_status', { msgId: message._id, status: MessageStatus.SENT });
       // check for chat existne
       const isChatExist = await this.userService.checkForChatExist(message.senderId, message.receiverId);
       // if chat is exist then termenate the process
       if (isChatExist) return;
-      // get current usr name
-      const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(message.senderId);
       // get chatWith usrname
       const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(message.receiverId);
       // chat with current usr
@@ -77,7 +91,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   async chatUsrStartTyping(@MessageBody() msg: { chatUsrId: string; action: ChatUserActions; cUsrId: string }) {
     try {
       // connect to the db to update the socket id
-      const { socket_id } = await this.userService.getUserSocketId(msg.chatUsrId);
+      const { socket_id } = await this.userService.getUserNotificationAdress(msg.chatUsrId);
       // send the chat usr status to the client
       this.wss.to(socket_id).emit('chatusr_typing_status', {
         action: msg.action,
@@ -93,7 +107,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     console.log('message delevered');
     try {
       // connect to the db to update the socket id
-      const { socket_id } = await this.userService.getUserSocketId(msg.senderId);
+      const { socket_id } = await this.userService.getUserNotificationAdress(msg.senderId);
       // send to the sender
       this.wss.to(socket_id).emit('message_status', {
         msgId: msg.msgId,
@@ -111,7 +125,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     console.log('message readed');
     try {
       // connect to the db to update the socket id
-      const { socket_id } = await this.userService.getUserSocketId(msg.senderId);
+      const { socket_id } = await this.userService.getUserNotificationAdress(msg.senderId);
       // send to the sender
       this.wss.to(socket_id).emit('message_status', {
         msgId: msg.msgId,
