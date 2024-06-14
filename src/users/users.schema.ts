@@ -15,6 +15,7 @@ export class User {
   @Prop() chats: SingleChat[];
   @Prop({ required: true, unique: true }) usrname: string;
   @Prop() onlineStatus: string;
+  @Prop({ required: false, type: Object }) pushNotificationSubscription: object | null; // TODO add types fro subscription
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

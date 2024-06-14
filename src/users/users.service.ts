@@ -6,6 +6,7 @@ import { LoginDTO, RegisterDTO } from 'src/auth/auth.interface';
 import { ChatProfile, LoginSucc, SingleChat } from './users.interface';
 import * as bcrypt from 'bcrypt';
 import { validateEmailInput } from 'src/utils/validations';
+import { PushSubscription } from 'web-push';
 
 @Injectable()
 export class UsersService {
@@ -62,15 +63,15 @@ export class UsersService {
     }
   }
   // get the socket id of the user
-  async getUserSocketId(usrId: string) {
+  async getUserNotificationAdress(usrId: string) {
     try {
       // try to get a user from db by cred.
-      const userSocketId = await this.userModel.findOne({ _id: usrId }, { socket_id: 1, _id: 0 });
-      // check if user is not null (user is exist)
-      if (userSocketId) {
-        return userSocketId;
-      }
-      return null;
+      const { socket_id, pushNotificationSubscription } = await this.userModel.findOne(
+        { _id: usrId },
+        { socket_id: 1, pushNotificationSubscription: 1 },
+      );
+      // return
+      return { socket_id, pushNotificationSubscription };
     } catch (err) {
       return Promise.reject('db error');
     }
@@ -78,10 +79,10 @@ export class UsersService {
   // get users chats
   async getUserChats(usrId: string): Promise<SingleChat[]> {
     try {
-      const chats = await (await this.userModel.findOne({ _id: usrId }, { _id: 0 })).chats.reverse();
+      const { chats } = await await this.userModel.findOne({ _id: usrId }, { _id: 0, chats: 1 });
       // chceck for null
       if (!chats) return null;
-      return chats;
+      return chats.reverse();
     } catch (err) {
       return err;
     }
@@ -217,6 +218,18 @@ export class UsersService {
       }
       await this.userModel.updateOne({ _id: currentUsrId }, { $set: { [fieldname]: value } });
       // `usr ${fieldname} is updated successfully`
+      return true;
+    } catch (error) {
+      return Promise.reject('database error');
+    }
+  }
+  // save usr push notification subscription
+  async savePushNotificationSubscription(usrId: string, subscription: PushSubscription) {
+    try {
+      await this.userModel.updateOne({ _id: usrId }, { $set: { pushNotificationSubscription: subscription } });
+      // TODO handle db insertion error
+      // `usr ${fieldname} is updated successfully`
+      console.log('succeeded');
       return true;
     } catch (error) {
       return Promise.reject('database error');
