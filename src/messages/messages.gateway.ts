@@ -54,15 +54,18 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       if (msgContent) message.content = msgContent;
       // send the message to the receiver
       this.wss.to(socket_id).emit('message', { ...message, status: MessageStatus.SENT });
-      // send push notification to the message reciver
       // get current usr name
       const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(message.senderId);
-      const notificationData = JSON.stringify({
-        senderName: cUserName,
-        senderImg: cUserAvatar,
-        msgText: message.content,
-      });
-      sendNotification(pushNotificationSubscription as PushSubscription, notificationData);
+      // send push notification to the message reciver
+      if (pushNotificationSubscription) {
+        const notificationData = JSON.stringify({
+          senderName: cUserName,
+          senderImg: cUserAvatar,
+          msgText: message.content,
+        });
+        console.log(pushNotificationSubscription);
+        sendNotification(pushNotificationSubscription as PushSubscription, notificationData);
+      }
       // notify sender user about msg sent
       client.emit('message_status', { msgId: message._id, status: MessageStatus.SENT });
       // check for chat existne
