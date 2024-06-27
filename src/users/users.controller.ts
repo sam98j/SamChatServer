@@ -100,6 +100,7 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'))
   @Post('save-subscription')
   async savePushNotificationSubscription(@Body() subscription: PushSubscription, @Req() req) {
+    console.log(subscription);
     try {
       const res = await this.userService.savePushNotificationSubscription(req.user.userId, subscription);
       return res;
