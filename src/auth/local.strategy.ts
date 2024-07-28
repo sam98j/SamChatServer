@@ -14,9 +14,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     try {
       const user = await this.userService.getUserByCred({ email: username, password });
       // if user is not authentecated
-      if (user) {
-        return user;
-      }
+      if (user) return user;
       return;
     } catch (error) {
       throw new BadGatewayException();

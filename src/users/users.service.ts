@@ -18,13 +18,18 @@ export class UsersService {
       const usr = await this.userModel.findOne({ $or: [{ email: user.email }, { usrname: user.usrname }] });
       // check if usr exist
       if (usr) return null;
-      // password salt
-      const salt = await bcrypt.genSalt();
-      // hashed password
-      const hashedPassword = await bcrypt.hash(user.password, salt);
-      // replace regular pass with encypted one
-      user.password = hashedPassword;
+      // check for password existence (in case of google sign in there is no password)
+      if (user.password) {
+        // password salt
+        const salt = await bcrypt.genSalt();
+        // hashed password
+        const hashedPassword = await bcrypt.hash(user.password, salt);
+        // replace regular pass with encypted one
+        user.password = hashedPassword;
+      }
+      // set usr as online
       const newUsr = new this.userModel({ ...user, onlineStatus: 'online' });
+      // save the usr document
       newUsr.save();
       return { name: newUsr.name, email: newUsr.email, avatar: newUsr.avatar, _id: newUsr.id } as UserDocument;
     } catch (error) {
@@ -37,12 +42,14 @@ export class UsersService {
       // try to get a user from db by cred.
       const response = await this.userModel.findOne({ email: user.email }, { __v: 0 });
       // check if user is not null (user is exist)
-      if (response) {
+      if (response && user.password !== '') {
         const match = await bcrypt.compare(user.password, response!.password);
         response.password = undefined;
         if (match) return response;
         return null;
       }
+      // in case of loggin with google sign in
+      if (response && user.password === '') return response;
       return null;
     } catch (err) {
       return Promise.reject(err);
