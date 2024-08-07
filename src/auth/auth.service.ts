@@ -11,9 +11,12 @@ export class AuthService {
     this.client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID!, process.env.GOOGLE_CLIENT_SECRET!);
   }
   // login method
-  login(user: LoginSucc): { access_token: string; user: LoginSucc } {
+  login(user: LoginSucc): { access_token: string; loggedInUser: Pick<LoginSucc, '_id' | 'avatar' | 'name'> } {
     const payload = { email: user.email, sub: user._id };
-    return { access_token: this.jwtService.sign(payload), user };
+    return {
+      access_token: this.jwtService.sign(payload),
+      loggedInUser: { _id: user._id, avatar: user.avatar, name: user.name },
+    };
   }
   // signup service
   async signUp(newUsr: RegisterDTO) {

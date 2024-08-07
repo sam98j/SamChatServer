@@ -14,10 +14,12 @@ export class MessagesController {
   async profileHandler(@Request() req) {
     try {
       const userChats = await this.userService.getUserChats(req.user.userId as string);
+      // get current usr data
+      const { avatar, name } = await this.userService.getUserData(req.user.userId);
       // check for null
       if (!userChats) return null;
       // if usr is loggedin it will recive a list of chats
-      return { chats: userChats, userId: req.user.userId };
+      return { chats: userChats, loggedInUser: { _id: req.user.userId, avatar, name } };
     } catch (err) {
       return err;
     }
@@ -49,7 +51,7 @@ export class MessagesController {
         (msg) => msg.receiverId === req.user.userId && msg.status === MessageStatus.DELEVERED,
       ).length;
       // chat last message
-      const { content, date, type, fileName, voiceNoteDuration, senderId, status } =
+      const { content, date, type, fileName, voiceNoteDuration, sender, status } =
         chatMessages[chatMessages.length - 1];
       // chat preview data
       const chatPreviewData: ChatPreviewData = {
@@ -57,7 +59,7 @@ export class MessagesController {
         lastMsgText: type === MessagesTypes.TEXT ? content : '',
         unReadedMsgs,
         voiceNoteDuration,
-        senderId,
+        senderId: sender._id.toString(),
         fileName,
         status,
         date,
