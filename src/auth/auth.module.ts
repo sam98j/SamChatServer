@@ -13,17 +13,19 @@ import { MulterModule } from '@nestjs/platform-express';
 // import { diskStorage } from 'multer';
 // import e from 'express';
 import { multerConfig } from 'src/config/multer';
+import { OAuth2Client } from 'google-auth-library';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
+    OAuth2Client,
     JwtModule.register({ secret: JwtConstants.secret }),
     ConfigModule,
     MulterModule.register({ storage: multerConfig }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UsersService, LocalStrategy, JwtStrategy],
-  exports: [UsersModule, UsersService, AuthService, JwtModule, MulterModule],
+  providers: [AuthService, UsersService, LocalStrategy, JwtStrategy, OAuth2Client],
+  exports: [UsersModule, UsersService, AuthService, JwtModule, MulterModule, OAuth2Client],
 })
 export class AuthModule {}

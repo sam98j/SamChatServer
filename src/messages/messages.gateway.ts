@@ -12,7 +12,8 @@ import { Server, Socket } from 'socket.io';
 import { UsersService } from 'src/users/users.service';
 import { ChatMessage, ChatUserActions, MessageStatus, MultiChunksMessage } from './messages.interface';
 import { MessagesService } from './messages.service';
-import { sendNotification, setVapidDetails, PushSubscription } from 'web-push';
+import { sendNotification, setVapidDetails } from 'web-push';
+import { ChatTypes, SingleChat } from 'src/users/users.interface';
 
 @WebSocketGateway({ cors: true })
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -28,62 +29,88 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('multi_chunks_message')
   async multiChunksMessageHandler(@MessageBody() msg: MultiChunksMessage, @ConnectedSocket() client: Socket) {
     // if it's last chunk
-    this.messageService.addChunk(msg.data._id, msg.data);
+    this.messageService.addMessageChunk(msg.data._id, msg.data);
     // tell the client about message chunk status
     client.emit('chunk_recieved', 'chunk done');
     // terminate if it's not last chunk
     if (!msg.isLastChunk) return;
     // get all file's chunks
-    const fullFileContent = this.messageService.getChunk(msg.data._id).content as string[];
-    // get message
-    const message = this.messageService.getChunk(msg.data._id).msg as ChatMessage;
+    const { content, msg: message } = this.messageService.getMessageChunk(msg.data._id);
     // combine all file's chunks
-    const file = fullFileContent.join('');
+    const messageContent = content.join('');
+    // proccessed chat message
+    const chatMessage: ChatMessage = { ...message, content: messageContent, status: MessageStatus.SENT };
     try {
+      // notify sender user about msg sent
+      client.emit('message_status', { msgId: chatMessage._id, status: MessageStatus.SENT });
       // add the message to the db
-      const msgContent = await this.messageService.addNewMessage({
-        ...message,
-        content: file,
-        status: MessageStatus.SENT,
-      });
-      // connect to the db to update the socket id
-      const { socket_id, pushNotificationSubscription } = await this.userService.getUserNotificationAdress(
-        message.receiverId,
+      const addChatMessageRes = await this.messageService.addNewMessage(chatMessage);
+      // get current chat type
+      const currentChatType = await this.userService.getChatType(
+        chatMessage.sender._id.toString(),
+        chatMessage.receiverId,
       );
       // check for content falsey value
-      if (msgContent) message.content = msgContent;
-      // send the message to the receiver
-      this.wss.to(socket_id).emit('message', { ...message, status: MessageStatus.SENT });
-      // get current usr name
-      const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(message.senderId);
-      // send push notification to the message reciver
-      if (pushNotificationSubscription) {
-        const notificationData = JSON.stringify({
-          senderName: cUserName,
-          senderImg: cUserAvatar,
-          msgText: message.content,
-        });
-        console.log(pushNotificationSubscription);
-        sendNotification(pushNotificationSubscription as PushSubscription, notificationData);
+      if (addChatMessageRes) message.content = addChatMessageRes;
+      // if chat type is not group
+      if (!currentChatType || currentChatType === ChatTypes.INDIVISUAL) {
+        const { socket_id, pushNotificationSubscription } = await this.userService.getUserNotificationAdress(
+          message.receiverId,
+        );
+        // send the message to the receiver
+        this.wss.to(socket_id).emit('message', { ...message, status: MessageStatus.SENT });
+        // get current usr name
+        const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(message.senderId);
+        // send push notification to the message reciver
+        if (pushNotificationSubscription) {
+          // notification object
+          const notificationData = { senderName: cUserName, senderImg: cUserAvatar, msgText: message.content };
+          try {
+            // send push notification to the receiver
+            await sendNotification(pushNotificationSubscription, JSON.stringify(notificationData));
+          } catch (error) {
+            console.log(error);
+          }
+        }
+        // check for chat existne
+        const isChatExist = await this.userService.checkForChatExist(message.senderId, message.receiverId);
+        // if chat is exist then termenate the process
+        if (isChatExist) return;
+        // get chatWith usrname
+        const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(message.receiverId);
+        // chat with current usr
+        const currentUsrAsChatWith: SingleChat = {
+          _id: message.senderId,
+          name: cUserName,
+          avatar: cUserAvatar,
+          type: ChatTypes.INDIVISUAL,
+          members: [],
+        };
+        // chat with current usr
+        const chatWithUsr: SingleChat = {
+          _id: message.receiverId,
+          name: chatUsrName,
+          avatar: chatUsrAvatar,
+          type: ChatTypes.INDIVISUAL,
+          members: [],
+        };
+        // add new chat to the initlizer user
+        await this.userService.addNewChat(message.senderId, chatWithUsr);
+        // add new chat to the other user
+        await this.userService.addNewChat(message.receiverId, currentUsrAsChatWith);
+        // send the create chat to the receiver usr
+        this.wss.to(socket_id).emit('new_chat_created', currentUsrAsChatWith);
       }
-      // notify sender user about msg sent
-      client.emit('message_status', { msgId: message._id, status: MessageStatus.SENT });
-      // check for chat existne
-      const isChatExist = await this.userService.checkForChatExist(message.senderId, message.receiverId);
-      // if chat is exist then termenate the process
-      if (isChatExist) return;
-      // get chatWith usrname
-      const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(message.receiverId);
-      // chat with current usr
-      const currentUsrAsChatWith = { usrid: message.senderId, usrname: cUserName, avatar: cUserAvatar };
-      // chat with current usr
-      const chatWithUsr = { usrid: message.receiverId, usrname: chatUsrName, avatar: chatUsrAvatar };
-      // add new chat to the initlizer user
-      await this.userService.addNewChat(message.senderId, chatWithUsr);
-      // add new chat to the other user
-      await this.userService.addNewChat(message.receiverId, currentUsrAsChatWith);
-      // send the create chat to the receiver usr
-      this.wss.to(socket_id).emit('new_chat_created', currentUsrAsChatWith);
+      // if chat type is group
+      if (currentChatType === ChatTypes.GROUP) {
+        // get group's members sockets IDs
+        const socketIDs = await this.userService.getChatMembersSocketIDs(
+          chatMessage.sender._id.toString(),
+          chatMessage.receiverId,
+        );
+        // send the message to the receiver
+        this.wss.to(socketIDs).emit('message', { ...message, status: MessageStatus.SENT });
+      }
     } catch (err) {
       return err;
     }

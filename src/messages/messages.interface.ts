@@ -1,3 +1,5 @@
+import { ChatMember } from 'src/users/users.interface';
+
 // message status enum
 export enum MessageStatus {
   'SENT' = 'SENT',
@@ -24,7 +26,7 @@ export interface ChatMessage {
   type: MessagesTypes;
   fileName: string | null;
   fileSize: string | null;
-  senderId: string;
+  sender: ChatMember;
   receiverId: string;
   status: MessageStatus | null;
   date: string;
