@@ -54,13 +54,16 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       if (addChatMessageRes) message.content = addChatMessageRes;
       // if chat type is not group
       if (!currentChatType || currentChatType === ChatTypes.INDIVISUAL) {
+        console.log(currentChatType);
         const { socket_id, pushNotificationSubscription } = await this.userService.getUserNotificationAdress(
           message.receiverId,
         );
         // send the message to the receiver
         this.wss.to(socket_id).emit('message', { ...message, status: MessageStatus.SENT });
         // get current usr name
-        const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(message.senderId);
+        const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(
+          chatMessage.sender._id.toString(),
+        );
         // send push notification to the message reciver
         if (pushNotificationSubscription) {
           // notification object
@@ -73,14 +76,19 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
           }
         }
         // check for chat existne
-        const isChatExist = await this.userService.checkForChatExist(message.senderId, message.receiverId);
+        const isChatExist = await this.userService.checkForChatExist(
+          chatMessage.sender._id.toString(),
+          chatMessage.receiverId,
+        );
         // if chat is exist then termenate the process
         if (isChatExist) return;
         // get chatWith usrname
-        const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(message.receiverId);
+        const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(
+          chatMessage.sender._id.toString(),
+        );
         // chat with current usr
         const currentUsrAsChatWith: SingleChat = {
-          _id: message.senderId,
+          _id: chatMessage.sender._id.toString(),
           name: cUserName,
           avatar: cUserAvatar,
           type: ChatTypes.INDIVISUAL,
@@ -88,16 +96,16 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
         };
         // chat with current usr
         const chatWithUsr: SingleChat = {
-          _id: message.receiverId,
+          _id: chatMessage.receiverId,
           name: chatUsrName,
           avatar: chatUsrAvatar,
           type: ChatTypes.INDIVISUAL,
           members: [],
         };
         // add new chat to the initlizer user
-        await this.userService.addNewChat(message.senderId, chatWithUsr);
+        await this.userService.addNewChat(chatMessage.sender._id.toString(), chatWithUsr);
         // add new chat to the other user
-        await this.userService.addNewChat(message.receiverId, currentUsrAsChatWith);
+        await this.userService.addNewChat(chatMessage.receiverId, currentUsrAsChatWith);
         // send the create chat to the receiver usr
         this.wss.to(socket_id).emit('new_chat_created', currentUsrAsChatWith);
       }
