@@ -24,7 +24,7 @@ export class AuthService {
       const user = await this.usersService.addUser(newUsr);
       if (!user) return null;
       const token_payload = { email: newUsr.email, sub: user._id };
-      return { user, access_token: this.jwtService.sign(token_payload) };
+      return { loggedInUser: user, access_token: this.jwtService.sign(token_payload) };
     } catch (error) {
       return Promise.reject(error);
     }
@@ -46,7 +46,7 @@ export class AuthService {
     try {
       const user = await this.usersService.getUserByCred({ email, password: '' });
       // check if usr is not exist
-      if (user) return { access_token: this.jwtService.sign({ email: user.email, sub: user._id }), user };
+      if (user) return { access_token: this.jwtService.sign({ email: user.email, sub: user._id }), loggedInUser: user };
       // sign up new usr
       const signUpRes = await this.signUp(newUsrDto);
       // return

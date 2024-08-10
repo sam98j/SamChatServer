@@ -83,9 +83,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
         // if chat is exist then termenate the process
         if (isChatExist) return;
         // get chatWith usrname
-        const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(
-          chatMessage.sender._id.toString(),
-        );
+        const { avatar: chatUsrAvatar, name: chatUsrName } = await this.userService.getUserData(chatMessage.receiverId);
         // chat with current usr
         const currentUsrAsChatWith: SingleChat = {
           _id: chatMessage.sender._id.toString(),
