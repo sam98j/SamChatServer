@@ -1,4 +1,4 @@
-import { ChatMember } from 'src/users/users.interface';
+import { ChatMember } from 'src/chats/chats.interfaces';
 
 // message status enum
 export enum MessageStatus {
@@ -31,17 +31,6 @@ export interface ChatMessage {
   status: MessageStatus | null;
   date: string;
   voiceNoteDuration: string;
-}
-// chat preview data
-export interface ChatPreviewData {
-  date: string;
-  lastMsgText: string;
-  unReadedMsgs: number;
-  type: MessagesTypes;
-  fileName: null | string;
-  voiceNoteDuration: string;
-  senderId: string;
-  status: MessageStatus;
 }
 // multi chunks message
 export interface MultiChunksMessage {

@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './users.schema';
 import { Model } from 'mongoose';
 import { LoginDTO, RegisterDTO } from 'src/auth/auth.interface';
-import { ChatProfile, LoginSucc, SingleChat } from './users.interface';
+import { ChatUserProfile, LoginSucc } from './users.interface';
 import * as bcrypt from 'bcrypt';
 import { validateEmailInput } from 'src/utils/validations';
 import { PushSubscription } from 'web-push';
@@ -91,30 +91,6 @@ export class UsersService {
       return Promise.reject(err);
     }
   }
-  // get users chats
-  async getUserChats(usrId: string): Promise<SingleChat[]> {
-    try {
-      const { chats } = await this.userModel.findOne({ _id: usrId }, { _id: 0, chats: 1 });
-      // chceck for null
-      if (!chats) return null;
-      // return chats
-      return chats.reverse();
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  }
-  // check for chat
-  async checkForChatExist(cUsrId: string, chatUsrId: string): Promise<boolean> {
-    try {
-      const { chats } = await this.userModel.findOne({ _id: cUsrId }, { chats: 1 });
-      // filter the chat to find chatUser
-      const isChatUserExist = Boolean(chats.filter((chat) => chat._id === chatUsrId).length);
-      // check for null
-      return isChatUserExist;
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  }
   // get Users By usrname
   async getUsrsByUsrname(usrname: string) {
     // aggregate query
@@ -131,45 +107,6 @@ export class UsersService {
       return matchedUsrs;
     } catch (err) {
       return Promise.reject(err);
-    }
-  }
-  // add new chat
-  async addNewChat(userId: string, newChat: SingleChat) {
-    try {
-      // check for chat existence
-      const isChatExist = await this.checkForChatExist(userId, newChat._id.toString());
-      // return false if chat is already exist
-      if (isChatExist) return false;
-      // add new chat if it's not exist
-      await this.userModel.updateOne({ _id: userId }, { $push: { chats: newChat } });
-      // return
-      return true;
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  }
-  // get chat's members sockets IDs
-  async getChatMembersSocketIDs(currentUserId: string, chatId: string) {
-    // TODO: refactor/find way to enhance db query
-    try {
-      const chat = (await this.userModel.findOne({ _id: currentUserId }, { chats: 1 })).chats.filter(
-        (chat) => chat._id === chatId,
-      )[0];
-      // chat members ids
-      const chatMembersIDs = chat.members
-        .map((member) => member._id)
-        .filter((memberId) => memberId.toString() !== currentUserId);
-      // chat members socket ids
-      const chatMembersSocketIDs = [];
-      // loop throw chat members IDs
-      for (let chatMemberId of chatMembersIDs) {
-        const { socket_id } = await this.userModel.findOne({ _id: chatMemberId }, { socket_id: 1 });
-        chatMembersSocketIDs.push(socket_id);
-      }
-      // return sockets IDs
-      return chatMembersSocketIDs;
-    } catch (error) {
-      return Promise.reject(error);
     }
   }
   // get user name
@@ -223,13 +160,13 @@ export class UsersService {
     }
   }
   // get chat profile
-  async getChatProfile(chatId: string) {
+  async getChatUserProfile(chatId: string) {
     try {
       const chatProfile = await this.userModel.findOne({ _id: chatId }, { name: 1, email: 1, avatar: 1 });
       // check for error
       if (!chatProfile) return null;
       // there's no error
-      return chatProfile as ChatProfile;
+      return chatProfile as ChatUserProfile;
     } catch (error) {
       return Promise.reject(error);
     }
@@ -277,21 +214,6 @@ export class UsersService {
       return true;
     } catch (error) {
       return Promise.reject(error);
-    }
-  }
-  // get chat type (group or indivisual)
-  async getChatType(currentUserId: string, chatId: string) {
-    try {
-      // get all user chats
-      const { chats } = await this.userModel.findOne({ _id: currentUserId }, { chats: 1 });
-      // find the realted chat
-      const filteredChats = chats.filter((chat) => chat._id === chatId);
-      // return null if no chat
-      if (filteredChats.length === 0) return null;
-      // retun chat type
-      return filteredChats[0].type;
-    } catch (error) {
-      return Promise.reject('database error');
     }
   }
 }

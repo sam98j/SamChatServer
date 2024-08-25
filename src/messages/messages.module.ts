@@ -7,9 +7,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Message, MessageSchema } from './messages.scheam';
 import { MessagesService } from './messages.service';
 import { FileService } from 'src/services/files';
+import { ChatsModule } from 'src/chats/chats.module';
 
 @Module({
-  imports: [UsersModule, MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }])],
+  imports: [ChatsModule, UsersModule, MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }])],
   providers: [MessagesGateway, UsersService, MessagesService, FileService],
   controllers: [MessagesController],
   exports: [MongooseModule, FileService],

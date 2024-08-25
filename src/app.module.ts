@@ -11,10 +11,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ChatsModule } from './chats/chats.module';
+import { ChatsController } from './chats/chats.controller';
 
 @Module({
   imports: [
     AuthModule,
+    ChatsModule,
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,7 +33,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
       },
     ]),
   ],
-  controllers: [AuthController, MessagesController],
+  controllers: [AuthController, MessagesController, ChatsController],
   providers: [AuthService, MessagesGateway, MessagesService],
 })
 export class AppModule {}

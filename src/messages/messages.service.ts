@@ -5,8 +5,6 @@ import { Model } from 'mongoose';
 import { ChatMessage, GetChatMessagesRes, MessageStatus, MessagesTypes } from './messages.interface';
 import { FileService } from 'src/services/files';
 import { FileToWritenData } from 'src/services/files.interface';
-import { UsersService } from 'src/users/users.service';
-import { ChatTypes } from 'src/users/users.interface';
 
 @Injectable()
 export class MessagesService {
@@ -14,7 +12,6 @@ export class MessagesService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
     @Inject(FileService) private readonly fileService: FileService,
-    private userService: UsersService,
   ) {}
   // add new message
   async addNewMessage(msg: ChatMessage) {
@@ -50,41 +47,32 @@ export class MessagesService {
     }
   }
   // get chat users messages
-  async getChatUsersMessages(
-    fUserId: string,
-    sUserId: string,
-    pageSize: number,
-    pageNumber: number,
-  ): Promise<GetChatMessagesRes> {
+  async getChatUsersMessages(chatId: string, pageSize: number, pageNumber: number) {
     try {
-      // get chat type
-      const chatType = await this.userService.getChatType(fUserId, sUserId);
-      // if there is no chat
-      if (!chatType) return { chatMessages: [], isLastBatch: true };
-      // get messages query
-      const getIndivualChatMessagesQuery = {
-        $and: [
-          { $or: [{ 'sender._id': fUserId }, { 'sender._id': sUserId }] },
-          { $or: [{ receiverId: fUserId }, { receiverId: sUserId }] },
-        ],
-      };
-      // get group chat messages
-      const getGroupChatMessagesQuery = { receiverId: sUserId };
-      // get chat messages query
-      const getChatMessagesQuery =
-        chatType === ChatTypes.GROUP ? getGroupChatMessagesQuery : getIndivualChatMessagesQuery;
       // messages count
-      const messagesCount = await this.messageModel.countDocuments(getChatMessagesQuery);
+      const messagesCount = await this.messageModel.countDocuments({ receiverId: chatId });
       // is it last batch of chat messages
       const isLastBatch = pageSize * pageNumber >= messagesCount;
       // check if batch size is begger than whole collection size
       const batchSize = isLastBatch ? 0 : messagesCount - pageSize * pageNumber;
       // fetch splited messages
-      const chatMessages = await this.messageModel.find(getChatMessagesQuery).skip(batchSize);
+      const chatMessages = await this.messageModel.find({ receiverId: chatId }).skip(batchSize);
       // return
-      return Promise.resolve({ chatMessages, isLastBatch });
+      return { chatMessages, isLastBatch } as GetChatMessagesRes;
     } catch (err) {
       return Promise.reject('db error');
+    }
+  }
+  // isItFirstMessage
+  async isItFirstMessage(receiverId: string) {
+    try {
+      const message = await this.messageModel.findOne({ receiverId });
+      // if there is a message
+      if (message) return false;
+      // return
+      return true;
+    } catch (error) {
+      return Promise.reject(error);
     }
   }
   // add chunk

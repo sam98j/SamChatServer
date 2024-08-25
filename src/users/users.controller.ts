@@ -17,7 +17,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateGroupChatDTO, LoggedInUsrProfile, SingleChat } from './users.interface';
+import { LoggedInUsrProfile } from './users.interface';
 import { PushSubscription } from 'web-push';
 
 @Controller('users')
@@ -85,7 +85,7 @@ export class UsersController {
   @Get('chat_profile/:id')
   async getChatPorfile(@Param('id') id: string) {
     try {
-      const chatProfile = await this.userService.getChatProfile(id);
+      const chatProfile = await this.userService.getChatUserProfile(id);
       // check for null
       if (!chatProfile) {
         return new HttpException(null, HttpStatus.BAD_REQUEST);
@@ -107,24 +107,5 @@ export class UsersController {
     } catch (error) {
       throw new BadGatewayException('');
     }
-  }
-  // create chat group
-  @UseGuards(AuthGuard('jwt'))
-  @Post('create_group_chat')
-  async createGroupChat(@Body() groupChatDTO: SingleChat, @Req() req) {
-    // group members ids
-    const groupMembersIDs = groupChatDTO.members.map((member) => member._id);
-    try {
-      // loop throw group's members IDs
-      for (let memberId of groupMembersIDs) {
-        // add chat for each chat's member
-        await this.userService.addNewChat(memberId.toString(), groupChatDTO);
-      }
-      // return true
-      return true;
-    } catch (error) {
-      throw new BadGatewayException('');
-    }
-    console.log(groupChatDTO, req.user.userId);
   }
 }
