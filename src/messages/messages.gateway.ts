@@ -50,7 +50,11 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       // is it first message in the chat
       const isItFirstMessage = await this.messageService.isItFirstMessage(receiverId);
       // notify sender user about msg sent
-      client.emit('message_status', { msgId: chatMessage._id, status: MessageStatus.SENT });
+      client.emit('message_status', {
+        msgId: chatMessage._id,
+        chatId: chatMessage.receiverId,
+        status: MessageStatus.SENT,
+      });
       // add the message to the db
       const addChatMessageRes = await this.messageService.addNewMessage(chatMessage);
       // check for content falsey value
@@ -60,31 +64,32 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       const chatMembers = await this.chatService.getChatMembersNotificationAdress(sender.name, receiverId);
       // chat members socket IDs
       const chatMembersSocketIDs = chatMembers.map((member) => member.socket_id);
-      // get socket and push notification adress
-      // send the message to the receiver
-      this.wss.to(chatMembersSocketIDs).emit('message', { ...message, status: MessageStatus.SENT });
       // get current usr name
-      const { avatar: cUserAvatar, name: cUserName } = await this.userService.getUserData(
-        chatMessage.sender._id.toString(),
-      );
+      const { avatar, name } = await this.userService.getUserData(chatMessage.sender._id.toString());
       // send push notification to the message reciver
       if (chatMembers[0].pushNotificationSubscription) {
         // notification object
-        const notificationData = { senderName: cUserName, senderImg: cUserAvatar, msgText: message.content };
+        const notificationData = { senderName: name, senderImg: avatar, msgText: message.content };
         try {
           // send push notification to the receiver
-          await sendNotification(chatMembers[0].pushNotificationSubscription, JSON.stringify(notificationData));
+          // sendNotification(chatMembers[0].pushNotificationSubscription, JSON.stringify(notificationData));
         } catch (error) {
           console.log(error);
         }
       }
-      if (!isItFirstMessage) return;
-      // get chat
-      const chat = (await this.chatService.getChat(receiverId)).toObject();
-      // send the create chat to the receiver usr
-      this.wss
-        .to(chatMembersSocketIDs)
-        .emit('new_chat_created', { ...chat, lastMessage: chatMessage, unReadedMsgs: 1 });
+      // if it's first message
+      if (isItFirstMessage) {
+        // get chat
+        const chat = (await this.chatService.getChat(receiverId)).toObject();
+        // send the create chat to the receiver usr
+        this.wss
+          .to(chatMembersSocketIDs)
+          .emit('new_chat_created', { ...chat, lastMessage: chatMessage, unReadedMsgs: 1 });
+        // return
+        return;
+      }
+      // send the message to the receiver
+      this.wss.to(chatMembersSocketIDs).emit('message', { ...message, status: MessageStatus.SENT });
     } catch (err) {
       return err;
     }
@@ -107,7 +112,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
   // message delevered
   @SubscribeMessage('message_delevered')
-  async messageDeleveredHandler(@MessageBody() msg: { msgId: string; senderId: string }) {
+  async messageDeleveredHandler(@MessageBody() msg: { msgId: string; chatId: string; senderId: string }) {
     console.log('message delevered');
     try {
       // connect to the db to update the socket id
@@ -115,6 +120,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       // send to the sender
       this.wss.to(socket_id).emit('message_status', {
         msgId: msg.msgId,
+        chatId: msg.chatId,
         status: MessageStatus.DELEVERED,
       });
       // update message status in db
@@ -125,7 +131,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
   // message readed
   @SubscribeMessage('message_readed')
-  async messageReadedHandler(@MessageBody() msg: { msgId: string; senderId: string }) {
+  async messageReadedHandler(@MessageBody() msg: { msgId: string; chatId: string; senderId: string }) {
     console.log('message readed');
     try {
       // connect to the db to update the socket id
@@ -133,6 +139,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       // send to the sender
       this.wss.to(socket_id).emit('message_status', {
         msgId: msg.msgId,
+        chatId: msg.chatId,
         status: MessageStatus.READED,
       });
       // update message status
