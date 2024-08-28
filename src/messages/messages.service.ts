@@ -38,10 +38,14 @@ export class MessagesService {
     }
   }
   // update message status
-  async updateMessageStatus(msgId: string, status: MessageStatus) {
+  async updateMessageStatus(msgIDs: string[], status: MessageStatus) {
     try {
-      await this.messageModel.updateOne({ _id: msgId }, { $set: { status } });
-      return Promise.resolve('message status updated');
+      // update messages
+      const updateRes = await this.messageModel.updateMany({ _id: { $in: msgIDs } }, { $set: { status } });
+      // check if no document was updated
+      if (updateRes.modifiedCount === 0) return false;
+      // return
+      return true;
     } catch (err) {
       return Promise.reject('db error');
     }

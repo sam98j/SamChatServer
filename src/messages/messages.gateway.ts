@@ -10,7 +10,13 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UsersService } from 'src/users/users.service';
-import { ChatMessage, ChatUserActions, MessageStatus, MultiChunksMessage } from './messages.interface';
+import {
+  ChangeMessageStatusDTO,
+  ChatMessage,
+  ChatUserActions,
+  MessageStatus,
+  MultiChunksMessage,
+} from './messages.interface';
 import { MessagesService } from './messages.service';
 import { sendNotification, setVapidDetails } from 'web-push';
 import { ChatService } from 'src/chats/chats.service';
@@ -50,12 +56,14 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     try {
       // is it first message in the chat
       const isItFirstMessage = await this.messageService.isItFirstMessage(receiverId);
-      // notify sender user about msg sent
-      client.emit('message_status', {
-        msgId: chatMessage._id,
+      // change message status data
+      const changeMessageStatusData: ChangeMessageStatusDTO = {
+        msgIDs: [chatMessage._id],
         chatId: chatMessage.receiverId,
-        status: MessageStatus.SENT,
-      });
+        msgStatus: MessageStatus.SENT,
+      };
+      // notify sender user about msg sent
+      client.emit('message_status_changed', changeMessageStatusData);
       // add the message to the db
       const addChatMessageRes = await this.messageService.addNewMessage(chatMessage);
       // check for content falsey value
@@ -115,44 +123,24 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       return err;
     }
   }
-  // message delevered
-  @SubscribeMessage('message_delevered')
-  async messageDeleveredHandler(@MessageBody() msg: { msgId: string; chatId: string; senderId: string }) {
-    console.log('message delevered');
-    try {
-      // connect to the db to update the socket id
-      const chatMembers = await this.userService.getUserNotificationAdress([msg.senderId]);
-      // chatMembersSocketIDs
-      const chatMembersSocketIDs = chatMembers.map((member) => member.socket_id);
-      // send to the sender
-      this.wss.to(chatMembersSocketIDs).emit('message_status', {
-        msgId: msg.msgId,
-        chatId: msg.chatId,
-        status: MessageStatus.DELEVERED,
-      });
-      // update message status in db
-      await this.messageService.updateMessageStatus(msg.msgId, MessageStatus.DELEVERED);
-    } catch (err) {
-      return err;
-    }
-  }
   // message readed
-  @SubscribeMessage('message_readed')
-  async messageReadedHandler(@MessageBody() msg: { msgId: string; chatId: string; senderId: string }) {
-    console.log('message readed');
+  @SubscribeMessage('message_status_changed')
+  async messageReadedHandler(@MessageBody() data: ChangeMessageStatusDTO) {
     try {
       // connect to the db to update the socket id
-      const chatMembers = await this.userService.getUserNotificationAdress([msg.senderId]);
+      const chatMembers = await this.userService.getUserNotificationAdress(data.senderIDs);
       // chatMembersSocketIDs
       const chatMembersSocketIDs = chatMembers.map((member) => member.socket_id);
+      // change message status data
+      const changeMessageStatusData: ChangeMessageStatusDTO = {
+        msgIDs: data.msgIDs,
+        chatId: data.chatId,
+        msgStatus: data.msgStatus,
+      };
       // send to the sender
-      this.wss.to(chatMembersSocketIDs).emit('message_status', {
-        msgId: msg.msgId,
-        chatId: msg.chatId,
-        status: MessageStatus.READED,
-      });
+      this.wss.to(chatMembersSocketIDs).emit('message_status_changed', changeMessageStatusData);
       // update message status
-      await this.messageService.updateMessageStatus(msg.msgId, MessageStatus.READED);
+      await this.messageService.updateMessageStatus(data.msgIDs, data.msgStatus);
     } catch (err) {
       return err;
     }
