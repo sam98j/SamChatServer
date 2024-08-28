@@ -78,15 +78,15 @@ export class UsersService {
     }
   }
   // get the socket id of the user
-  async getUserNotificationAdress(usrId: string) {
+  async getUserNotificationAdress(usersIDs: string[]) {
     try {
       // try to get a user from db by cred.
-      const { socket_id, pushNotificationSubscription } = await this.userModel.findOne(
-        { _id: usrId },
+      const users = await this.userModel.find(
+        { _id: { $in: usersIDs } },
         { socket_id: 1, pushNotificationSubscription: 1 },
       );
       // return
-      return { socket_id, pushNotificationSubscription };
+      return users;
     } catch (err) {
       return Promise.reject(err);
     }

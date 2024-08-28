@@ -14,6 +14,7 @@ import { ChatMessage, ChatUserActions, MessageStatus, MultiChunksMessage } from 
 import { MessagesService } from './messages.service';
 import { sendNotification, setVapidDetails } from 'web-push';
 import { ChatService } from 'src/chats/chats.service';
+import { Types } from 'mongoose';
 
 @WebSocketGateway({ cors: true })
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -97,12 +98,16 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
   // chatusr_start_typing
   @SubscribeMessage('chatusr_typing_status')
-  async chatUsrStartTyping(@MessageBody() msg: { chatUsrId: string; action: ChatUserActions; cUsrId: string }) {
+  async chatUsrStartTyping(@MessageBody() msg: { chatMembersIDs: string[]; action: ChatUserActions; cUsrId: string }) {
     try {
       // connect to the db to update the socket id
-      const { socket_id } = await this.userService.getUserNotificationAdress(msg.chatUsrId);
+      const chatMembers = await this.userService.getUserNotificationAdress(msg.chatMembersIDs);
+      // chatMembersSocketIDs
+      const chatMembersSocketIDs = chatMembers
+        .filter((member) => String(member._id) !== msg.cUsrId)
+        .map((member) => member.socket_id);
       // send the chat usr status to the client
-      this.wss.to(socket_id).emit('chatusr_typing_status', {
+      this.wss.to(chatMembersSocketIDs).emit('chatusr_typing_status', {
         action: msg.action,
         actionSender: msg.cUsrId,
       });
@@ -116,9 +121,11 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     console.log('message delevered');
     try {
       // connect to the db to update the socket id
-      const { socket_id } = await this.userService.getUserNotificationAdress(msg.senderId);
+      const chatMembers = await this.userService.getUserNotificationAdress([msg.senderId]);
+      // chatMembersSocketIDs
+      const chatMembersSocketIDs = chatMembers.map((member) => member.socket_id);
       // send to the sender
-      this.wss.to(socket_id).emit('message_status', {
+      this.wss.to(chatMembersSocketIDs).emit('message_status', {
         msgId: msg.msgId,
         chatId: msg.chatId,
         status: MessageStatus.DELEVERED,
@@ -135,9 +142,11 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     console.log('message readed');
     try {
       // connect to the db to update the socket id
-      const { socket_id } = await this.userService.getUserNotificationAdress(msg.senderId);
+      const chatMembers = await this.userService.getUserNotificationAdress([msg.senderId]);
+      // chatMembersSocketIDs
+      const chatMembersSocketIDs = chatMembers.map((member) => member.socket_id);
       // send to the sender
-      this.wss.to(socket_id).emit('message_status', {
+      this.wss.to(chatMembersSocketIDs).emit('message_status', {
         msgId: msg.msgId,
         chatId: msg.chatId,
         status: MessageStatus.READED,
