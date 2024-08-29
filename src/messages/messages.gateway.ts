@@ -12,15 +12,14 @@ import { Server, Socket } from 'socket.io';
 import { UsersService } from 'src/users/users.service';
 import {
   ChangeMessageStatusDTO,
+  ChatActions,
   ChatMessage,
-  ChatUserActions,
   MessageStatus,
   MultiChunksMessage,
 } from './messages.interface';
 import { MessagesService } from './messages.service';
 import { sendNotification, setVapidDetails } from 'web-push';
 import { ChatService } from 'src/chats/chats.service';
-import { Types } from 'mongoose';
 
 @WebSocketGateway({ cors: true })
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -106,18 +105,21 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
   // chatusr_start_typing
   @SubscribeMessage('chatusr_typing_status')
-  async chatUsrStartTyping(@MessageBody() msg: { chatMembersIDs: string[]; action: ChatUserActions; cUsrId: string }) {
+  async chatUsrStartTyping(@MessageBody() chatAction: ChatActions) {
     try {
       // connect to the db to update the socket id
-      const chatMembers = await this.userService.getUserNotificationAdress(msg.chatMembersIDs);
+      const chatMembers = await this.userService.getUserNotificationAdress(chatAction.chatMembers);
       // chatMembersSocketIDs
       const chatMembersSocketIDs = chatMembers
-        .filter((member) => String(member._id) !== msg.cUsrId)
+        .filter((member) => String(member._id) !== chatAction.senderId)
         .map((member) => member.socket_id);
+      // chat action data
+      const { type, senderId, chatId } = chatAction;
       // send the chat usr status to the client
       this.wss.to(chatMembersSocketIDs).emit('chatusr_typing_status', {
-        action: msg.action,
-        actionSender: msg.cUsrId,
+        type,
+        senderId,
+        chatId,
       });
     } catch (err) {
       return err;
