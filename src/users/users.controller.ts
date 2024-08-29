@@ -81,21 +81,6 @@ export class UsersController {
       return new BadGatewayException(error);
     }
   }
-  // get Chat Profile
-  @Get('chat_profile/:id')
-  async getChatPorfile(@Param('id') id: string) {
-    try {
-      const chatProfile = await this.userService.getChatUserProfile(id);
-      // check for null
-      if (!chatProfile) {
-        return new HttpException(null, HttpStatus.BAD_REQUEST);
-      }
-      // there is no error
-      return chatProfile;
-    } catch (error) {
-      throw new BadGatewayException('');
-    }
-  }
   // subscribe to push notifications
   @UseGuards(AuthGuard('jwt'))
   @Post('save-subscription')

@@ -5,6 +5,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Param,
   Post,
   Request,
   UseGuards,
@@ -31,6 +32,19 @@ export class ChatsController {
       return { chats: userChats, loggedInUser: { _id: req.user.userId, avatar, name } };
     } catch (err) {
       return new HttpException('Server Err', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+  // get Chat Profile
+  @Get(':id')
+  async getChat(@Param('id') id: string) {
+    try {
+      const chatProfile = await this.chatService.getChat(id);
+      // check for null
+      if (!chatProfile) return new HttpException(null, HttpStatus.BAD_REQUEST);
+      // there is no error
+      return chatProfile;
+    } catch (error) {
+      throw new BadGatewayException(error);
     }
   }
   // create chat group

@@ -159,18 +159,6 @@ export class UsersService {
       return Promise.reject(error);
     }
   }
-  // get chat profile
-  async getChatUserProfile(chatId: string) {
-    try {
-      const chatProfile = await this.userModel.findOne({ _id: chatId }, { name: 1, email: 1, avatar: 1 });
-      // check for error
-      if (!chatProfile) return null;
-      // there's no error
-      return chatProfile as ChatUserProfile;
-    } catch (error) {
-      return Promise.reject(error);
-    }
-  }
   // update usr profile data
   async updateUsrProfileData(currentUsrId: string, profileField: { fieldname: string; value: string }) {
     // destruct profile data
