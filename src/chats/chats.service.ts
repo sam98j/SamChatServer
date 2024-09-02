@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Chat } from './chats.schema';
 import { Model, PipelineStage } from 'mongoose';
@@ -131,6 +131,19 @@ export class ChatService {
       return chatMembersNotificationAdress;
     } catch (error) {
       console.log(error);
+      return Promise.reject(error);
+    }
+  }
+  // delete chat
+  async deleteChat(_id: string) {
+    console.log(_id);
+    try {
+      const deleteChatRes = await this.chatsModel.deleteOne({ _id });
+      // if no document was deleted
+      if (deleteChatRes.deletedCount) throw new Error('No chat was deleted');
+      // return
+      return true;
+    } catch (error) {
       return Promise.reject(error);
     }
   }

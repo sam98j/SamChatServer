@@ -2,6 +2,7 @@ import {
   BadGatewayException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -14,10 +15,15 @@ import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/users/users.service';
 import { ChatService } from './chats.service';
 import { SingleChat } from './chats.interfaces';
+import { MessagesService } from 'src/messages/messages.service';
 
 @Controller('chats')
 export class ChatsController {
-  constructor(private userService: UsersService, private chatService: ChatService) {}
+  constructor(
+    private userService: UsersService,
+    private chatService: ChatService,
+    private messagesService: MessagesService,
+  ) {}
   // get usr chats
   @UseGuards(AuthGuard('jwt'))
   @Get('/')
@@ -58,6 +64,23 @@ export class ChatsController {
       return true;
     } catch (error) {
       throw new BadGatewayException('');
+    }
+  }
+  // delete chat
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':id')
+  async deleteChat(@Param('id') _id: string) {
+    try {
+      // check if there is messages in this  chat
+      const messages = await this.messagesService.getChatUsersMessages(_id, 1, 1);
+      console.log(messages.chatMessages);
+      if (messages.chatMessages.length == 0) {
+        const deleteChatRes = await this.chatService.deleteChat(_id);
+        return deleteChatRes;
+      }
+      // return deleteChatRes;
+    } catch (error) {
+      throw new BadGatewayException(error);
     }
   }
 }
