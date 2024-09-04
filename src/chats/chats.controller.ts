@@ -72,12 +72,13 @@ export class ChatsController {
   async deleteChat(@Param('id') _id: string) {
     try {
       // check if there is messages in this  chat
-      const messages = await this.messagesService.getChatUsersMessages(_id, 1, 1);
-      console.log(messages.chatMessages);
-      if (messages.chatMessages.length == 0) {
-        const deleteChatRes = await this.chatService.deleteChat(_id);
-        return deleteChatRes;
-      }
+      const messages = await this.messagesService.getChatMessages(_id, 1, 1);
+      // terminate if there is messages related to this chat
+      if (messages.chatMessages.length !== 0) return;
+      // if chat is deleted
+      await this.chatService.deleteChat(_id);
+      // return true
+      return true;
       // return deleteChatRes;
     } catch (error) {
       throw new BadGatewayException(error);

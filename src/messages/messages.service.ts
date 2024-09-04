@@ -51,7 +51,7 @@ export class MessagesService {
     }
   }
   // get chat users messages
-  async getChatUsersMessages(chatId: string, pageSize: number, pageNumber: number) {
+  async getChatMessages(chatId: string, pageSize: number, pageNumber: number) {
     try {
       // messages count
       const messagesCount = await this.messageModel.countDocuments({ receiverId: chatId });

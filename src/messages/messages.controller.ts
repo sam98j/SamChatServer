@@ -11,7 +11,7 @@ export class MessagesController {
   @Get('/getchatmessages/:chaUsrtId')
   async chatMessagesHandler(@Param('chaUsrtId') chaUsrtId: string, @Query('msgs_batch') msgsBatch: number) {
     try {
-      const res = await this.messageService.getChatUsersMessages(chaUsrtId, 10, msgsBatch);
+      const res = await this.messageService.getChatMessages(chaUsrtId, 10, msgsBatch);
       return res;
     } catch (err) {
       return new HttpException('Internal Server err', HttpStatus.INTERNAL_SERVER_ERROR);

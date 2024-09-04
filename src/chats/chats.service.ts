@@ -136,11 +136,10 @@ export class ChatService {
   }
   // delete chat
   async deleteChat(_id: string) {
-    console.log(_id);
     try {
       const deleteChatRes = await this.chatsModel.deleteOne({ _id });
       // if no document was deleted
-      if (deleteChatRes.deletedCount) throw new Error('No chat was deleted');
+      if (!deleteChatRes.deletedCount) throw new Error('No chat was deleted');
       // return
       return true;
     } catch (error) {
