@@ -41,7 +41,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     // if it's last chunk
     this.messageService.addMessageChunk(msg.data._id, msg.data);
     // tell the client about message chunk status
-    client.emit('chunk_recieved', 'chunk done');
+    client.emit('chunk_recieved');
     // terminate if it's not last chunk
     if (!msg.isLastChunk) return;
     // get all file's chunks
