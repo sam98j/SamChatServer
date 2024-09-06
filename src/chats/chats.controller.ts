@@ -9,13 +9,16 @@ import {
   Param,
   Post,
   Request,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/users/users.service';
 import { ChatService } from './chats.service';
 import { SingleChat } from './chats.interfaces';
 import { MessagesService } from 'src/messages/messages.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('chats')
 export class ChatsController {
@@ -56,10 +59,17 @@ export class ChatsController {
   // create chat group
   @UseGuards(AuthGuard('jwt'))
   @Post('/create_chat')
-  async createGroupChat(@Body() groupChatDTO: SingleChat) {
+  @UseInterceptors(FileInterceptor('avatar'))
+  async createGroupChat(@Body() groupChatDTO: { chat: string }, @UploadedFile() file: Express.Multer.File) {
+    // parse chat
+    const chat = JSON.parse(groupChatDTO.chat) as SingleChat;
+    // urs profile image url
+    const avatarPath = file ? `/${file.originalname}` : '';
+    // set group avatar
+    chat.avatar = avatarPath;
     try {
       // create new chat
-      await this.chatService.addNewChat(groupChatDTO);
+      await this.chatService.addNewChat(chat);
       // return true
       return true;
     } catch (error) {

@@ -28,7 +28,7 @@ export class AuthController {
   // signup handler
   @Post('signup')
   @UseInterceptors(FileInterceptor('profile_img'))
-  async signup(@Req() req: Request, @Body() usrDTO: RegisterDTO, @UploadedFile() file: Express.Multer.File) {
+  async signup(@Body() usrDTO: RegisterDTO, @UploadedFile() file: Express.Multer.File) {
     // urs profile image url
     const profileImgURL = file ? `/${file.originalname}` : '';
     // assinge url to the usr

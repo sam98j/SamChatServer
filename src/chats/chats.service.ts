@@ -76,6 +76,7 @@ export class ChatService {
           type: 1,
           members: 1,
           name: 1,
+          avatar: 1,
           lastMessage: '$data.lastMessage',
           unReadedMsgs: '$data.unReaded',
         },
