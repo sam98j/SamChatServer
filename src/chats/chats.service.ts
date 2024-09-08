@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Chat } from './chats.schema';
 import { Model, PipelineStage } from 'mongoose';
-import { SingleChat } from './chats.interfaces';
+import { ChatMember, SingleChat } from './chats.interfaces';
 import { MessageStatus } from 'src/messages/messages.interface';
 import { getChatMembersRes } from './chats.interfaces';
 
@@ -141,6 +141,18 @@ export class ChatService {
       const deleteChatRes = await this.chatsModel.deleteOne({ _id });
       // if no document was deleted
       if (!deleteChatRes.deletedCount) throw new Error('No chat was deleted');
+      // return
+      return true;
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+  // add chat members
+  async addChatMembers(_id: string, members: ChatMember[]) {
+    try {
+      const addMembersRes = await this.chatsModel.updateOne({ _id }, { $push: { members: { $each: members } } });
+      // if no document was deleted
+      if (!addMembersRes.modifiedCount) throw new Error('No member was added');
       // return
       return true;
     } catch (error) {

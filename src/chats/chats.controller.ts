@@ -16,7 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from 'src/users/users.service';
 import { ChatService } from './chats.service';
-import { SingleChat } from './chats.interfaces';
+import { ChatMember, SingleChat } from './chats.interfaces';
 import { MessagesService } from 'src/messages/messages.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -60,9 +60,9 @@ export class ChatsController {
   @UseGuards(AuthGuard('jwt'))
   @Post('/create_chat')
   @UseInterceptors(FileInterceptor('avatar'))
-  async createGroupChat(@Body() groupChatDTO: { chat: string }, @UploadedFile() file: Express.Multer.File) {
+  async createGroupChat(@Body('chat') groupChatDTO: string, @UploadedFile() file: Express.Multer.File) {
     // parse chat
-    const chat = JSON.parse(groupChatDTO.chat) as SingleChat;
+    const chat = JSON.parse(groupChatDTO) as SingleChat;
     // urs profile image url
     const avatarPath = file ? `/${file.originalname}` : '';
     // set group avatar
@@ -92,6 +92,19 @@ export class ChatsController {
       // return deleteChatRes;
     } catch (error) {
       throw new BadGatewayException(error);
+    }
+  }
+  // add chat members
+  @UseGuards(AuthGuard('jwt'))
+  @Post('/addmembers/:id')
+  async addChatMembers(@Param('id') _id: string, @Body() members: ChatMember[]) {
+    try {
+      // add chat's members
+      const addMembersRes = await this.chatService.addChatMembers(_id, members);
+      // check for null
+      return addMembersRes;
+    } catch (err) {
+      return new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
