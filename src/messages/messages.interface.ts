@@ -37,6 +37,8 @@ export interface ChatMessage {
   receiverId: string;
   status: MessageStatus | null;
   date: string;
+  replyTo: string | null;
+  msgReplyedTo: Pick<ChatMessage, '_id' | 'content' | 'type'> | null;
   voiceNoteDuration: string;
 }
 // multi chunks message

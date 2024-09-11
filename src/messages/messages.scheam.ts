@@ -17,6 +17,8 @@ export class Message implements ChatMessage {
   @Prop() date: string | null;
   @Prop() receiverId: string;
   @Prop() type: MessagesTypes;
+  @Prop() replyTo: string | null;
+  @Prop({ type: Object }) msgReplyedTo: Pick<ChatMessage, '_id' | 'content' | 'type' | 'sender'> | null;
   @Prop() voiceNoteDuration: string;
 }
 

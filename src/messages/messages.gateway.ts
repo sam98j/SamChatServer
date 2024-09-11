@@ -49,7 +49,12 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     // combine all file's chunks
     const messageContent = content.join('');
     // proccessed chat message
-    const chatMessage: ChatMessage = { ...message, content: messageContent, status: MessageStatus.SENT };
+    const chatMessage: ChatMessage = {
+      ...message,
+      content: messageContent,
+      status: MessageStatus.SENT,
+      msgReplyedTo: null,
+    };
     // decunstruct chat message
     const { receiverId, sender } = chatMessage;
     try {

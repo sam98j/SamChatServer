@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Message } from './messages.scheam';
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import { ChatMessage, GetChatMessagesRes, MessageStatus, MessagesTypes } from './messages.interface';
 import { FileService } from 'src/services/files';
 import { FileToWritenData } from 'src/services/files.interface';
@@ -52,6 +52,48 @@ export class MessagesService {
   }
   // get chat users messages
   async getChatMessages(chatId: string, pageSize: number, pageNumber: number) {
+    const query = [
+      { $match: { receiverId: chatId } },
+      // Stage 1: Lookup the referenced message using the `replyTo` field
+      {
+        $lookup: {
+          from: 'messages',
+          localField: 'replyTo',
+          foreignField: '_id',
+          as: 'reply',
+        },
+      },
+      // Stage 2: Unwind the `reply` array (if multiple replies exist)
+      // Stage 3: Project the desired fields from both the original and reply messages
+      {
+        $project: {
+          // TODO: enhance this projection
+          _id: 1,
+          type: 1,
+          sender: 1,
+          content: 1,
+          data: 1,
+          fileName: 1,
+          date: 1,
+          fileSize: 1,
+          voiceNoteDuration: 1,
+          receiverId: 1,
+          status: 1,
+          msgReplyedTo: {
+            $cond: {
+              if: { $ne: ['$reply', []] },
+              then: {
+                _id: { $arrayElemAt: ['$reply._id', 0] },
+                content: { $arrayElemAt: ['$reply.content', 0] },
+                sender: { $arrayElemAt: ['$reply.sender', 0] },
+                type: { $arrayElemAt: ['$reply.type', 0] },
+              },
+              else: null,
+            },
+          },
+        },
+      },
+    ] as PipelineStage[];
     try {
       // messages count
       const messagesCount = await this.messageModel.countDocuments({ receiverId: chatId });
@@ -60,7 +102,7 @@ export class MessagesService {
       // check if batch size is begger than whole collection size
       const batchSize = isLastBatch ? 0 : messagesCount - pageSize * pageNumber;
       // fetch splited messages
-      const chatMessages = await this.messageModel.find({ receiverId: chatId }).skip(batchSize);
+      const chatMessages = await this.messageModel.aggregate(query).skip(batchSize);
       // return
       return { chatMessages, isLastBatch } as GetChatMessagesRes;
     } catch (err) {
