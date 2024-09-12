@@ -87,6 +87,8 @@ export class MessagesService {
                 content: { $arrayElemAt: ['$reply.content', 0] },
                 sender: { $arrayElemAt: ['$reply.sender', 0] },
                 type: { $arrayElemAt: ['$reply.type', 0] },
+                voiceNoteDuration: { $arrayElemAt: ['$reply.voiceNoteDuration', 0] },
+                fileName: { $arrayElemAt: ['$reply.fileName', 0] },
               },
               else: null,
             },
