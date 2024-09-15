@@ -85,7 +85,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
         const notificationData = { senderName: name, senderImg: avatar, msgText: message.content };
         try {
           // send push notification to the receiver
-          // sendNotification(chatMembers[0].pushNotificationSubscription, JSON.stringify(notificationData));
+          sendNotification(chatMembers[0].pushNotificationSubscription, JSON.stringify(notificationData));
         } catch (error) {
           console.log(error);
         }
