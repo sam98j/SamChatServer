@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -88,6 +89,17 @@ export class UsersController {
     console.log(subscription);
     try {
       const res = await this.userService.savePushNotificationSubscription(req.user.userId, subscription);
+      return res;
+    } catch (error) {
+      throw new BadGatewayException('');
+    }
+  }
+  // delete push subscription
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('delete_push_sub')
+  async deletePushNotificationSubscription(@Req() req) {
+    try {
+      const res = await this.userService.deletePushNotificationSubscription(req.user.userId);
       return res;
     } catch (error) {
       throw new BadGatewayException('');

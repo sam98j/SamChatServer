@@ -204,4 +204,19 @@ export class UsersService {
       return Promise.reject(error);
     }
   }
+  // save usr push notification subscription
+  async deletePushNotificationSubscription(usrId: string) {
+    try {
+      const updateRes = await this.userModel.updateOne(
+        { _id: usrId },
+        { $set: { pushNotificationSubscription: null } },
+      );
+      // if no usr has been updated
+      if (updateRes.modifiedCount === 0) return false;
+      // return
+      return true;
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
 }
