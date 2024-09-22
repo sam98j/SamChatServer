@@ -34,6 +34,7 @@ export class ChatService {
   }
   // get users chats
   async getUserChats(usrId: string) {
+    // TODO: enhance this query
     const query = [
       { $match: { 'members._id': usrId } },
       {
@@ -44,7 +45,14 @@ export class ChatService {
             {
               $match: {
                 $expr: {
-                  $eq: ['$receiverId', '$$chatId'],
+                  $or: [
+                    {
+                      $eq: ['$receiverId', '$$chatId'],
+                    },
+                    {
+                      $and: [{ $isArray: '$forwardedTo' }, { $in: ['$$chatId', '$forwardedTo'] }],
+                    },
+                  ],
                 },
               },
             },
