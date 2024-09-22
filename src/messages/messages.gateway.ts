@@ -14,6 +14,7 @@ import {
   ChangeMessageStatusDTO,
   ChatActions,
   ChatMessage,
+  ForwardMessagesDTO,
   MessageStatus,
   MultiChunksMessage,
 } from './messages.interface';
@@ -111,6 +112,17 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       return err;
     }
     return;
+  }
+  // forward messages
+  @SubscribeMessage('forward_messages')
+  async forwardMessagesHandler(@MessageBody() data: ForwardMessagesDTO, @ConnectedSocket() client: Socket) {
+    try {
+      const updateRes = await this.messageService.forwardMessages(data);
+      if (!updateRes) return;
+      client.emit('forward_messages_done');
+    } catch (error) {
+      console.log(error);
+    }
   }
   // chatusr_start_typing
   @SubscribeMessage('chatusr_typing_status')

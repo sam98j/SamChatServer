@@ -26,6 +26,11 @@ export enum MessagesTypes {
   FILE = 'FILE',
   VOICENOTE = 'VOICENOTE',
 }
+// forward message
+export interface ForwardMessagesDTO {
+  chats: string[];
+  messages: string[];
+}
 // chat Message interface
 export interface ChatMessage {
   _id: string;
@@ -34,6 +39,7 @@ export interface ChatMessage {
   fileName: string | null;
   fileSize: string | null;
   sender: ChatMember;
+  forwardedTo?: string[];
   receiverId: string;
   status: MessageStatus | null;
   date: string;

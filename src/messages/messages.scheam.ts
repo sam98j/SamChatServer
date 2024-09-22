@@ -14,6 +14,7 @@ export class Message implements ChatMessage {
   @Prop() status: MessageStatus | null;
   @Prop() fileSize: MessageStatus | null;
   @Prop() fileName: MessageStatus | null;
+  @Prop() forwardedTo?: string[];
   @Prop() date: string | null;
   @Prop() receiverId: string;
   @Prop() type: MessagesTypes;

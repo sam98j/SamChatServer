@@ -2,7 +2,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Message } from './messages.scheam';
 import { Model, PipelineStage } from 'mongoose';
-import { ChatMessage, GetChatMessagesRes, MessageStatus, MessagesTypes } from './messages.interface';
+import {
+  ChatMessage,
+  ForwardMessagesDTO,
+  GetChatMessagesRes,
+  MessageStatus,
+  MessagesTypes,
+} from './messages.interface';
 import { FileService } from 'src/services/files';
 import { FileToWritenData } from 'src/services/files.interface';
 
@@ -53,7 +59,7 @@ export class MessagesService {
   // get chat users messages
   async getChatMessages(chatId: string, pageSize: number, pageNumber: number) {
     const query = [
-      { $match: { receiverId: chatId } },
+      { $match: { $or: [{ receiverId: chatId }, { forwardedTo: chatId }] } },
       // Stage 1: Lookup the referenced message using the `replyTo` field
       {
         $lookup: {
@@ -79,6 +85,7 @@ export class MessagesService {
           voiceNoteDuration: 1,
           receiverId: 1,
           status: 1,
+          forwardedTo: 1,
           msgReplyedTo: {
             $cond: {
               if: { $ne: ['$reply', []] },
@@ -118,6 +125,19 @@ export class MessagesService {
       // if there is a message
       if (message) return false;
       // return
+      return true;
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+  // forward message
+  async forwardMessages(data: ForwardMessagesDTO) {
+    try {
+      const updateRes = await this.messageModel.updateOne(
+        { _id: data.messages[0] },
+        { $push: { forwardedTo: { $each: data.chats } } },
+      );
+      if (!updateRes.modifiedCount) return false;
       return true;
     } catch (error) {
       return Promise.reject(error);
