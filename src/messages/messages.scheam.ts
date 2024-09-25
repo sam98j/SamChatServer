@@ -1,7 +1,7 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { ChatMessage, MessageStatus, MessagesTypes } from './messages.interface';
+import { ActionMessagesTypes, ChatMessage, MessageStatus, MessagesTypes } from './messages.interface';
 import { ChatMember } from 'src/chats/chats.interfaces';
 
 export type MessageDocument = HydratedDocument<Message>;
@@ -17,6 +17,7 @@ export class Message implements ChatMessage {
   @Prop() forwardedTo?: string[];
   @Prop() date: string | null;
   @Prop() receiverId: string;
+  @Prop() actionMsgType?: ActionMessagesTypes;
   @Prop() type: MessagesTypes;
   @Prop() replyTo: string | null;
   @Prop({ type: Object }) msgReplyedTo: Pick<ChatMessage, '_id' | 'content' | 'type' | 'sender'> | null;

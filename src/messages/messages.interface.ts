@@ -24,8 +24,11 @@ export enum MessagesTypes {
   VIDEO = 'VIDEO',
   PHOTO = 'PHOTO',
   FILE = 'FILE',
+  ACTION = 'ACTION',
   VOICENOTE = 'VOICENOTE',
 }
+// chat Actions
+export type ActionMessagesTypes = 'CREATION' | 'MEMBER_ADITION';
 // forward message
 export interface ForwardMessagesDTO {
   chats: string[];
@@ -36,6 +39,7 @@ export interface ChatMessage {
   _id: string;
   content: string;
   type: MessagesTypes;
+  actionMsgType?: ActionMessagesTypes;
   fileName: string | null;
   fileSize: string | null;
   sender: ChatMember;

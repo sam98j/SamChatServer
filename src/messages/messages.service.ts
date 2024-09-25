@@ -21,9 +21,10 @@ export class MessagesService {
   ) {}
   // add new message
   async addNewMessage(msg: ChatMessage) {
+    console.log(msg);
     try {
       // if it's not a text message then edite those properties
-      if (msg.type !== MessagesTypes.TEXT) {
+      if (msg.type !== MessagesTypes.TEXT && msg.type !== MessagesTypes.ACTION) {
         // destruct needed data
         const { content: bufferStr, sender, receiverId } = msg;
         // data of file to be writen
