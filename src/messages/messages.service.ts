@@ -21,7 +21,6 @@ export class MessagesService {
   ) {}
   // add new message
   async addNewMessage(msg: ChatMessage) {
-    console.log(msg);
     try {
       // if it's not a text message then edite those properties
       if (msg.type !== MessagesTypes.TEXT && msg.type !== MessagesTypes.ACTION) {
@@ -86,6 +85,7 @@ export class MessagesService {
           voiceNoteDuration: 1,
           receiverId: 1,
           status: 1,
+          actionMsgType: 1,
           forwardedTo: 1,
           msgReplyedTo: {
             $cond: {
