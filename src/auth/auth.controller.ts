@@ -45,13 +45,15 @@ export class AuthController {
   }
   @Post('/signup_with_google')
   async signUpWithGoogle(@Req() req: Request) {
+    // google oauth id_token
     const tokenId = req.headers.authorization;
     try {
-      const signUpWithGoogleRes = await this.authService.signUpWithGoogle(tokenId);
+      // auth with google login / signup
+      const signUpWithGoogleRes = await this.authService.authWithGoogle(tokenId);
+      // return
       return signUpWithGoogleRes;
     } catch (error) {
       return new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    // console.log(req.headers.authorization);
   }
 }
