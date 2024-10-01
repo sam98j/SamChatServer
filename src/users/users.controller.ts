@@ -105,4 +105,22 @@ export class UsersController {
       throw new BadGatewayException('');
     }
   }
+  // get usr settings page
+  @UseGuards(AuthGuard('jwt'))
+  @Post('/settings')
+  async getUserSettings(@Req() req) {
+    try {
+      const users = await this.userService.getUserNotificationAdress([req.user.userId]);
+      // users setting obj
+      const userSettings = {
+        pushNotifications: null,
+      };
+      // check for push subscription
+      if (!users[0].pushNotificationSubscription) return { ...userSettings, pushNotifications: false };
+      // return true
+      return { ...userSettings, pushNotifications: true };
+    } catch (error) {
+      throw new BadGatewayException('');
+    }
+  }
 }

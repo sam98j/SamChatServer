@@ -86,7 +86,7 @@ export class UsersService {
         { socket_id: 1, pushNotificationSubscription: 1 },
       );
       // return
-      return users;
+      return users as Pick<UserDocument, 'pushNotificationSubscription' | 'socket_id' | '_id'>[];
     } catch (err) {
       return Promise.reject(err);
     }
