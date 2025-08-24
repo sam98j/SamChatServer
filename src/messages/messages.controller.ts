@@ -1,5 +1,5 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
-import { Controller, Get, HttpException, HttpStatus, Param, Query, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessagesService } from './messages.service';
 
@@ -10,6 +10,7 @@ export class MessagesController {
   @UseGuards(AuthGuard('jwt'))
   @Get('/getchatmessages/:chaUsrtId')
   async chatMessagesHandler(@Param('chaUsrtId') chaUsrtId: string, @Query('msgs_batch') msgsBatch: number) {
+    console.log(chaUsrtId);
     try {
       const res = await this.messageService.getChatMessages(chaUsrtId, 10, msgsBatch);
       return res;

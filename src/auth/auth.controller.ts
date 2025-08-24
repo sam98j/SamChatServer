@@ -23,6 +23,7 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   async login(@Req() req) {
+    console.log('req', req.user);
     return this.authService.login(req.user);
   }
   // signup handler
