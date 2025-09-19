@@ -1,0 +1,9 @@
+{
+  "prettier.enable": true,
+  "prettier.requireConfig": true,
+  "prettier.printWidth": 80,
+  "editor.renderWhitespace": "boundary",
+  "workbench.colorCustomizations": {
+    "editorWhitespace.foreground": "#ffffff86"
+  }
+}
