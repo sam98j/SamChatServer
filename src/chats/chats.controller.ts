@@ -89,6 +89,7 @@ export class ChatsController {
       const messages = await this.messagesService.getChatMessages(_id, 1, 1);
       // terminate if there is messages related to this chat
       if (messages.chatMessages.length !== 0) return;
+
       // if chat is deleted
       await this.chatService.deleteChat(_id);
       // return true

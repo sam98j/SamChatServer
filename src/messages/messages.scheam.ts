@@ -17,6 +17,7 @@ export class Message implements ChatMessage {
   @Prop() forwardedTo?: string[];
   @Prop({ type: Date }) date: Date | null;
   @Prop() receiverId: string;
+  @Prop() isForwarded?: boolean;
   @Prop() actionMsgType?: ActionMessagesTypes;
   @Prop() type: MessagesTypes;
   @Prop() replyTo: string | null;

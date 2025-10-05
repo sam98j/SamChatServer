@@ -45,6 +45,7 @@ export interface ChatMessage {
   fileSize: string | null;
   sender: ChatMember;
   forwardedTo?: string[];
+  isForwarded?: boolean;
   receiverId: string;
   status: MessageStatus | null;
   date: Date;

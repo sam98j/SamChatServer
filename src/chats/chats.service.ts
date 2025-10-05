@@ -9,7 +9,6 @@ import { getChatMembersRes } from './chats.interfaces';
 @Injectable()
 export class ChatService {
   constructor(@InjectModel(Chat.name) private chatsModel: Model<Chat>) {}
-
   // add new chat
   async addNewChat(newChat: SingleChat) {
     try {
