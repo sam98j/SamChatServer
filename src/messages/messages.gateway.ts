@@ -22,7 +22,7 @@ import { MessagesService } from './messages.service';
 import { sendNotification, setVapidDetails } from 'web-push';
 import { ChatService } from 'src/chats/chats.service';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({ cors: true, transports: ['websocket'] })
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // constructor
   constructor(
@@ -34,8 +34,10 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     const apiKeys = { publicKey: process.env.PUBLIC_VAPID_KEY, privateKey: process.env.PRIVATE_VAPID_KEY };
     setVapidDetails('mailto:hosam98j@gmail.com', apiKeys.publicKey, apiKeys.privateKey);
   }
+
   // web socket server
   @WebSocketServer() wss: Server;
+
   // multi chunks message
   @SubscribeMessage('multi_chunks_message')
   async multiChunksMessageHandler(@MessageBody() msg: MultiChunksMessage, @ConnectedSocket() client: Socket) {
@@ -113,6 +115,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
     return;
   }
+
   // forward messages
   @SubscribeMessage('forward_messages')
   async forwardMessagesHandler(@MessageBody() data: ForwardMessagesDTO, @ConnectedSocket() client: Socket) {
@@ -124,6 +127,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       console.log(error);
     }
   }
+
   // chatusr_start_typing
   @SubscribeMessage('chatusr_typing_status')
   async chatUsrStartTyping(@MessageBody() chatAction: ChatActions) {
@@ -146,6 +150,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       return err;
     }
   }
+
   // message readed
   @SubscribeMessage('message_status_changed')
   async messageReadedHandler(@MessageBody() data: ChangeMessageStatusDTO) {
@@ -168,29 +173,50 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       return err;
     }
   }
+
   // handle client connection
   async handleConnection(@ConnectedSocket() client: Socket) {
-    console.log('client connected');
+    console.log(`client connected: ${client.id}`);
     try {
       // current connected client id
       const connectedUserId = client.handshake.query.client_id as string;
+
       // connect to the db to update the socket id
       await this.userService.updateUserSocketId({
         _id: connectedUserId,
         socket_id: client.id,
       });
+
+      // set user online status
       await this.userService.setUsrOnlineStatus(connectedUserId, 'online');
+
+      // emit user online status
+      // TODO: emit user online status to just the user's contacts
       this.wss.emit('usr_online_status', {
         id: connectedUserId,
         status: 'online',
       });
+
+      // get all chats members socketIds
+      const chatMembersSocketIds = await this.chatService.getAllChatsMembersSocketIds(connectedUserId);
+
+      // get just socket ids and exclude the current user socket id
+      const socketIds = chatMembersSocketIds
+        .map((member) => member.socket_id)
+        .filter((socketId) => socketId !== client.id);
+
+      // emit socket ids to the client
+      this.wss.to(socketIds).emit('messages_delivered', { senderId: connectedUserId });
+      // mark sent messages as delivered
+      await this.messageService.updateMessageStatus([], MessageStatus.DELEVERED, connectedUserId);
     } catch (err) {
       return err;
     }
   }
+
   // handle client disconnection
   async handleDisconnect(@ConnectedSocket() client: Socket) {
-    console.log('client disconnected');
+    console.log(`client disconnected: ${client.id}`);
     try {
       // current connected client id
       const connectedUserId = client.handshake.query.client_id as string;

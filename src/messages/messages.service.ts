@@ -19,6 +19,7 @@ export class MessagesService {
     @InjectModel(Message.name) private messageModel: Model<Message>,
     @Inject(FileService) private readonly fileService: FileService,
   ) {}
+
   // add new message
   async addNewMessage(msg: ChatMessage) {
     try {
@@ -43,19 +44,70 @@ export class MessagesService {
       return Promise.reject('db err');
     }
   }
+
   // update message status
-  async updateMessageStatus(msgIDs: string[], status: MessageStatus) {
+  async updateMessageStatus(msgIDs: string[], status: MessageStatus, currUserId?: string) {
     try {
-      // update messages
+      // if currUserId is provided then update only messages that are sent to him
+      if (currUserId) {
+
+        const updateRes = await this.messageModel.aggregate([
+          {
+            // 1. Join with the chats collection
+            $lookup: {
+              from: "chats",
+              localField: "receiverId",
+              foreignField: "_id",
+              as: "chat_details"
+            }
+          },
+          {
+            // 2. Filter for messages where the joined chat has member.id = 1
+            $match: {
+              "chat_details.members._id": currUserId,
+              "status": MessageStatus.SENT,
+              "sender._id": { $ne: currUserId }
+            }
+          },
+          {
+            // 3. Set the new field values
+            $set: {
+              status: MessageStatus.DELEVERED
+            }
+          },
+          {
+            // 4. Remove the joined data before saving
+            $project: { chat_details: 0 }
+          },
+          {
+            // 5. Merge the changes back into the messages collection
+            $merge: {
+              into: "messages",
+              on: "_id",
+              whenMatched: "replace"
+            }
+          }
+        ]);
+
+        // check if no document was updated
+        if (updateRes) return false;
+        // return
+        return true;
+      }
+
+      // update messages with msgIDs
       const updateRes = await this.messageModel.updateMany({ _id: { $in: msgIDs } }, { $set: { status } });
+
       // check if no document was updated
       if (updateRes.modifiedCount === 0) return false;
+
       // return
       return true;
     } catch (err) {
       return Promise.reject('db error');
     }
   }
+
   // get chat users messages
   async getChatMessages(chatId: string, pageSize: number, pageNumber: number) {
     const query = [
@@ -119,6 +171,7 @@ export class MessagesService {
       return Promise.reject('db error');
     }
   }
+
   // isItFirstMessage
   async isItFirstMessage(receiverId: string) {
     try {
@@ -131,6 +184,7 @@ export class MessagesService {
       return Promise.reject(error);
     }
   }
+
   // forward message
   async forwardMessages(data: ForwardMessagesDTO) {
     try {
@@ -144,6 +198,7 @@ export class MessagesService {
       return Promise.reject(error);
     }
   }
+
   // add chunk
   addMessageChunk(key: string, value: ChatMessage) {
     // if there is no chunk
@@ -159,10 +214,12 @@ export class MessagesService {
     };
     this.multiChunksMessages.set(key, newMessage);
   }
+
   // getChunk
   getMessageChunk(key: string) {
     return this.multiChunksMessages.get(key);
   }
+
   // has chunk
   messageHasChunk(key: string) {
     return this.multiChunksMessages.has(key);

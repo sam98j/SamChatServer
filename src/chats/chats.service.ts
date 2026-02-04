@@ -5,6 +5,7 @@ import { Model, PipelineStage } from 'mongoose';
 import { ChatMember, SingleChat } from './chats.interfaces';
 import { MessageStatus } from 'src/messages/messages.interface';
 import { getChatMembersRes } from './chats.interfaces';
+import { User, UserDocument } from 'src/users/users.schema';
 
 @Injectable()
 export class ChatService {
@@ -20,6 +21,7 @@ export class ChatService {
       return Promise.reject(err);
     }
   }
+
   // getChat
   async getChat(chatId: string) {
     try {
@@ -66,7 +68,15 @@ export class ChatService {
                   $sum: {
                     $cond: [
                       {
-                        $and: [{ $eq: ['$status', MessageStatus.DELEVERED] }, { $ne: ['$sender._id', usrId] }],
+                        $and: [
+                          {
+                            $or: [
+                              { $eq: ['$status', MessageStatus.DELEVERED] },
+                              { $eq: ['$status', MessageStatus.SENT] },
+                            ],
+                          },
+                          { $ne: ['$sender._id', usrId] },
+                        ],
                       },
                       1,
                       0,
@@ -100,6 +110,52 @@ export class ChatService {
       return chats;
     } catch (err) {
       return Promise.reject(err);
+    }
+  }
+
+  // get all chats members socketIds
+  async getAllChatsMembersSocketIds(currentUserId: string) {
+    try {
+      const chatMembersSocketIds = await this.chatsModel.aggregate([
+        { $match: { 'members._id': currentUserId } },
+        {
+          $lookup: {
+            from: 'messages',
+            localField: '_id',
+            foreignField: 'receiverId',
+            as: 'messages',
+          },
+        },
+        {
+          $match: {
+            'messages.status': MessageStatus.SENT,
+          },
+        },
+        { $unwind: '$members' },
+        {
+          $lookup: {
+            from: 'users',
+            let: { memberId: '$members._id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ['$_id', { $toObjectId: '$$memberId' }] },
+                },
+              },
+            ],
+            as: 'user_info',
+          },
+        },
+        { $unwind: '$user_info' },
+        { $project: { socket_id: '$user_info.socket_id' } },
+      ]);
+
+      console.log(chatMembersSocketIds, 'chat members sockets ids');
+      // return
+      return chatMembersSocketIds as Pick<UserDocument, 'socket_id' | '_id'>[];
+    } catch (error) {
+      console.log(error);
+      return Promise.reject(error);
     }
   }
 
